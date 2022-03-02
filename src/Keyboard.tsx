@@ -21,9 +21,11 @@ export function Keyboard(props: KeyboardProps) {
         <div key={i} className="Game-keyboard-row">
           {row.map((label, j) => {
             let className = "Game-keyboard-button";
+            let shouldDisable: boolean = false;
             const clue = props.letterInfo.get(label);
-            if (clue !== undefined) {
-              className += " " + clueClass(clue);
+            if (clue === Clue.Absent) {
+              className += " " + clueClass(Clue.Absent);
+              shouldDisable = true;
             }
             if (label.length > 1) {
               className += " Game-keyboard-button-wide";
@@ -33,11 +35,12 @@ export function Keyboard(props: KeyboardProps) {
                 tabIndex={-1}
                 key={j}
                 className={className}
+                disabled={shouldDisable}
                 onClick={() => {
                   props.onKey(label);
                 }}
               >
-                {label.replace("Backspace", "⌫")}
+                {label.replace("Backspace", "⌫").replace("Enter", "↵")}
               </button>
             );
           })}

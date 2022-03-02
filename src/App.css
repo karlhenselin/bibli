@@ -11,6 +11,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-flow: row wrap;
 }
 
 .Row-letter {
@@ -18,6 +19,7 @@ body {
   border: 2px solid rgba(128, 128, 128, 0.8);
   flex: 1;
   max-width: 40px;
+  min-width: 30px;
   height: 40px;
   font-size: 28px;
   display: flex;
@@ -26,11 +28,18 @@ body {
   text-transform: uppercase;
   font-weight: bold;
 }
+.Row-letter.Space {
+  max-width: 4000px;
+  width:100%;
+  border: none;
+  margin: 1%;
+}
 .Row-letter-color {
   margin: 2px;
   border: 2px solid rgba(128, 128, 128, 0.8);
   flex: 1;
   max-width: 40px;
+  min-width: 30px;
   height: 40px;
   font-size: 28px;
   display: flex;
@@ -135,8 +144,8 @@ table.Game-rows > tbody {
 }
 
 .letter-absent {
-  border: 2px solid transparent;
-  background-color: rgb(162, 162, 162);
+  border: 2px solid rgb(162, 162, 162);
+  background: rgb(162, 162, 162);
   color: white !important;
 }
 

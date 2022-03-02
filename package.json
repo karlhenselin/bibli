@@ -1,5 +1,5 @@
 {
-  "name": "wordl",
+  "name": "bubli",
   "version": "0.1.0",
   "homepage": "http://hellowordl.net/",
   "private": false,
@@ -43,5 +43,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "ts-jest": "^27.1.3"
   }
 }
