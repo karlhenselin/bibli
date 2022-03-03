@@ -14,15 +14,7 @@ export function About() {
         Letters that don't fit with other letters in a word that's incomplete float away on the next guessed letter. Guess letters in order of a word to save your guesses.
       </p>
       <hr />
-      <Passage
-        passageLength={4}
-        cluedLetters={[
-          { clue: Clue.Absent, letter: " " },
-          { clue: Clue.Absent, letter: "" },
-          { clue: Clue.Correct, letter: "R" },
-          { clue: Clue.Elsewhere, letter: "d" },
-        ]}
-      />
+     
       <p>
         Report issues{" "}
         <a href="https://github.com/karlhenselin/bubli/issues">here</a>.

@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Passage} from "./Passage";
-import { Clue, clue, describeClue,guessesNotInTarget } from "./clue";
+import { Clue, clue, describeClue,guessesNotInTarget, ICluedLetter, CluedLetter, dectrimentClue, clueFadedWords } from "./clue";
 import { Keyboard } from "./Keyboard";
 import targetList from "./targets.json";
 import {
   describeSeed,
   gameName,
-  pick,
+  //pick,
   resetRng,
   seed,
   speak,
@@ -78,12 +78,49 @@ function parseUrlGameNumber(): number {
   return gameNumber >= 1 && gameNumber <= 1000 ? gameNumber : 1;
 }
 
+
+function blankLetterState(target: string): ICluedLetter[] {
+  const cluedLetters: ICluedLetter[] = [];
+  const letters: string[] =  target.split('');
+  for(const letter of letters){
+    if(letter === " "){
+      cluedLetters.push(new CluedLetter(letter, Clue.Space));
+    }else{
+      cluedLetters.push(new CluedLetter(letter, undefined));
+    }
+  }
+  return cluedLetters;
+}
+
+function mergeClues(letterStates: ICluedLetter[], arg1: ICluedLetter[]) {
+  const cluedLetters : ICluedLetter[] = [];
+  for(const i in letterStates){
+    if(letterStates[i].clue === Clue.Correct){
+      cluedLetters.push(letterStates[i]);
+    }else if (arg1[i].clue === Clue.Correct){
+      cluedLetters.push(arg1[i]);
+    }
+    else 
+      if(letterStates[i].isFaded()){
+        cluedLetters.push(dectrimentClue(letterStates[i]));
+      }else{
+        cluedLetters.push(arg1[i]);
+      }
+  }
+
+  clueFadedWords(cluedLetters);
+
+  return cluedLetters;
+}
+
+let letterStates :ICluedLetter[] = [];
+
+
 function Game(props: GameProps) {
-  const [gameState, setGameState] = useState(GameState.Playing);
+  const [gameState, setGameState] = useState<GameState>(GameState.Playing);
   const [guesses, setGuesses] = useState<string[]>([]);
   const [currentGuess, setCurrentGuess] = useState<string>("");
   const [challenge, setChallenge] = useState<string>(initChallenge);
-
   const [gameNumber, setGameNumber] = useState(parseUrlGameNumber());
   const [target, setTarget] = useState(() => {
     resetRng();
@@ -91,6 +128,11 @@ function Game(props: GameProps) {
     //for(let i = 1; i < gameNumber; i++) randomTarget(wordLength);
     return challenge || randomTarget();
   });
+  
+  if (letterStates.length === 0){
+    letterStates = blankLetterState(target);
+  }
+
   const [wordLength, setWordLength] = useState(() => { return target.length});
   const [hint, setHint] = useState<string>(
     challengeError
@@ -123,6 +165,7 @@ function Game(props: GameProps) {
     setCurrentGuess("");
     setGameState(GameState.Playing);
     setGameNumber((x) => x + 1);
+    letterStates = blankLetterState(target);
   };
 
   async function share(copiedHint: string, text?: string) {
@@ -210,11 +253,12 @@ function Game(props: GameProps) {
   }, [currentGuess, gameState]);
 
   let letterInfo = new Map<string, Clue>();
+
   const tableRows = Array(1)
     .fill(undefined)
     .map((_, i) => {
       const guess = [...guesses, currentGuess][i] ?? "";
-      const cluedLetters = clue(guess, target);
+      letterStates = mergeClues(letterStates, clue(guess, target));
       for(const cl of guessesNotInTarget(guess, target)){
         if(cl.clue !== undefined){
           letterInfo.set(cl.letter.toLowerCase(),cl.clue);
@@ -226,7 +270,7 @@ function Game(props: GameProps) {
         <Passage
           key={i}
           passageLength={wordLength}
-          cluedLetters={cluedLetters}
+          cluedLetters={letterStates}
         />
       );
     })
@@ -308,3 +352,6 @@ function Game(props: GameProps) {
 }
 
 export default Game;
+
+
+

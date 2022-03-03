@@ -1,18 +1,41 @@
 export enum Clue {
   Absent,
-  Elsewhere,
-  Correct,
-  Space
+  Space,
+  Fade4,
+  Fade3,
+  Fade2,
+  Fade1,
+  Fade0,
+  Correct
 }
-
+export function dectrimentClue(clue: ICluedLetter) : ICluedLetter{
+  if(clue.clue === Clue.Fade0 ){
+    clue.clue = Clue.Fade1;
+  } else if(clue.clue === Clue.Fade1 ){
+    clue.clue = Clue.Fade2;
+  } else if(clue.clue === Clue.Fade2 ){
+    clue.clue = Clue.Fade3;
+  } else if(clue.clue === Clue.Fade3 ){
+    clue.clue = Clue.Fade4;
+  } else if(clue.clue === Clue.Fade4 ){
+    clue.clue = undefined;
+    clue.letter = "";
+  }
+  return clue
+}
 export interface ICluedLetter {
   clue?: Clue;
   letter: string;
+  isFaded(): boolean;
 }
 
-class CluedLetter implements ICluedLetter {
+export class CluedLetter implements ICluedLetter {
+  isFaded(): boolean {
+    return this.clue === Clue.Fade0 || this.clue === Clue.Fade1 || this.clue === Clue.Fade2 || this.clue === Clue.Fade3 || this.clue === Clue.Fade4;
+  }
   constructor(public letter: string,public clue?: Clue) {
   }
+  
 }
 
 function wordInAllGuesses(word: string, guesses: string): boolean{
@@ -63,7 +86,11 @@ function checkAdditionalLetters(word: string, guesses: string, cluedLetters: Clu
     let letters: string[] = word.split("");
     for(let i in letters){
       if(letters[i] === guesses.slice(-1)){
-        cluedLetters[i].clue = Clue.Correct;
+        if(cluedLetters[i].clue === undefined){
+          cluedLetters[i].clue = Clue.Fade0;
+        }else{
+          cluedLetters[i] = dectrimentClue(cluedLetters[i] );
+        }
         cluedLetters[i].letter = letters[i];
       }
     }
@@ -75,6 +102,10 @@ function checkAdditionalLetters(word: string, guesses: string, cluedLetters: Clu
 
 function onlyUnique(value: any, index: number, self: any[]) {
   return self.indexOf(value) === index;
+}
+
+function isFaded(value: ICluedLetter, index: number, self: ICluedLetter[]) {
+  return value.isFaded();
 }
 
 export function clue(guesses: string, target: string): CluedLetter[] {
@@ -105,8 +136,8 @@ export function clue(guesses: string, target: string): CluedLetter[] {
    
 
     //now merge that into the array to return.
-    for(var i = 0; i < cluedLetters.length; i++) {
-      clues.push(cluedLetters[i])
+    for(var j = 0; j < cluedLetters.length; j++) {
+      clues.push(cluedLetters[j])
     }
     clues.push(new CluedLetter(" ",Clue.Space));
   })
@@ -132,18 +163,25 @@ export function clueClass(clue: Clue): string {
     return "letter-absent";
   } else if (clue === Clue.Space) {
     return "letter-space";
-  }else if (clue === Clue.Elsewhere) {
-    return "letter-elsewhere";
-  } else {
+  }else if (clue === Clue.Fade0) {
+    return "letter-fade0";
+  }else if (clue === Clue.Fade1) {
+    return "letter-fade1";
+  }else if (clue === Clue.Fade2) {
+    return "letter-fade2";
+  }else if (clue === Clue.Fade3) {
+    return "letter-fade3";
+  }else if (clue === Clue.Fade4) {
+    return "letter-fade4";
+  }else if (clue === Clue.Correct) {
     return "letter-correct";
   }
+  return "";
 }
 
 export function clueWord(clue: Clue): string {
   if (clue === Clue.Absent) {
     return "no";
-  } else if (clue === Clue.Elsewhere) {
-    return "elsewhere";
   } else {
     return "correct";
   }
@@ -153,4 +191,22 @@ export function describeClue(clue: CluedLetter[]): string {
   return clue
     .map(({ letter, clue }) => letter.toUpperCase() + " " + clueWord(clue!))
     .join(", ");
+}
+
+export function clueFadedWords(cluedLetters: ICluedLetter[]) {
+  let index: number = 0;
+  const lettersArray: string[] = cluedLetters.map((cl: ICluedLetter) => {
+    if( cl.letter === ''){
+      return "~";
+    }
+    return cl.letter;
+    ;
+  });
+  const words: string[] = lettersArray.join('').split(' ');
+  for(let word of words){
+    if(word.length === cluedLetters.slice(index,word.length + index).filter(isFaded).length){
+      cluedLetters.slice(index,word.length + index).forEach((x: ICluedLetter) => x.clue = Clue.Correct);
+    }
+    index += word.length + 1;
+  }
 }
