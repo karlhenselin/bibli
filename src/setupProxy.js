@@ -3,7 +3,6 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 function onProxyRes(proxyRes, req, res) {
     res.header('Access-Control-Allow-Origin', '*');
     console.log(req.originalUrl);
-    console.log(res.changeOrigin);
   }
 
 module.exports = function(app) {

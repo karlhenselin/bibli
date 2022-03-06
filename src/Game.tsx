@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState,useCallback } from "react";
 import { Passage} from "./Passage";
-import { Clue, clue, guessesNotInTarget, CluedLetter, decrimentClue, clueFadedWords, onlyUnique } from "./clue";
+import { Clue, clue, guessesNotInTarget, CluedLetter, decrimentClue, clueFadedWords } from "./clue";
 import { Keyboard } from "./Keyboard";
 import {Language} from "./books";
 import {randomTarget} from "./App";
 import {
   gameName
 } from "./util";
-import { decode, encode } from "./base64";
+//import { decode, encode } from "./base64";
 
 enum GameState {
   Playing,
@@ -87,7 +87,7 @@ function Game(props: GameProps) {
     setHint(url);
   }
 
-  const onKey = (key: string) => {
+  const onKey = useCallback((key: string) => {
     if (gameState !== GameState.Playing) {
       if (key === "Enter") {
         startNextGame();
@@ -99,25 +99,26 @@ function Game(props: GameProps) {
       tableRef.current?.focus();
       setHint("");
       setGuesses((guesses) => guesses.concat([key.toLowerCase()]));
-      setTarget((t) => mergeClues(new Map(t), clue(guesses.concat([key.toLowerCase()]).join(''), target)));
+      const t = mergeClues(new Map(target), clue(guesses.concat([key.toLowerCase()]).join(''), target))
+      setTarget((nt) => t);
       let newLetters = new Map(letterInfo);
       for(const cl of guessesNotInTarget(key.toLowerCase(), target)){
         if(cl.clue !== undefined){
           newLetters.set(cl.letter.toLowerCase(),cl.clue);
         }
       }
-      if(newLetters.size != 0){
+      if(newLetters.size !== 0){
         setLetterInfo(new Map([...letterInfo, ...newLetters]));
       }
-      
+      if (allDone(t)) {
+        setHint("You won!");
+        setGameState(GameState.Won);
+      }
     } 
 
-    if (allDone(target)) {
-      setHint("You won!");
-      setGameState(GameState.Won);
-    }
     
-  };
+    
+  },[letterInfo, gameState, guesses, target]);
 
   const onKeyDown = useCallback((e: KeyboardEvent) => {
     if (!e.ctrlKey && !e.metaKey) {
@@ -126,7 +127,7 @@ function Game(props: GameProps) {
     if (e.key === "Backspace") {
       e.preventDefault();
     }
-  }, [onKey,currentGuess,gameState]);
+  }, [onKey]);
 
   useEffect(() => {
     
@@ -151,11 +152,10 @@ function Game(props: GameProps) {
       return (
         <Passage
           key={2}
-          cluedLetters={new Map}
+          cluedLetters={new Map()}
         />
       );
     }));
-    const fadedLetters = Array.from(target.values()).flat().filter((x) => x.isFaded()).map((x) => x.letter).filter(onlyUnique)
   return (
     <div className="Game" style={{ display: props.hidden ? "none" : "block" }}>
       <div

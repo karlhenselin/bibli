@@ -1,4 +1,3 @@
-import { JsxEmit } from "typescript";
 import { clueClass, CluedLetter, ICluedLetter, Clue } from "./clue";
 
 interface PassageProps {

@@ -57,8 +57,7 @@ export function randomTarget() {
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u201C\u201D]/g, '');
     target = wordsMapFromText(text);
-  });
-  throw("Error loading Bible API.");
+  }).catch((err: string) => {throw(err)});
   
   }
 
