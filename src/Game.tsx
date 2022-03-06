@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState,useCallback } from "react";
 import { Passage} from "./Passage";
-import { Clue, clue, guessesNotInTarget, ICluedLetter, CluedLetter, dectrimentClue, clueFadedWords } from "./clue";
+import { Clue, clue, guessesNotInTarget, CluedLetter, decrimentClue, clueFadedWords, onlyUnique } from "./clue";
 import { Keyboard } from "./Keyboard";
 import {Language} from "./books";
 import {randomTarget} from "./App";
@@ -30,15 +30,15 @@ function mergeClues(letterStates: Map<number, CluedLetter[]>, arg1: Map<number, 
       || value[i].clue === Clue.Punctuation
       ){
           //no change
-      }else if (arg1[key] != undefined && arg1[key][i].clue === Clue.Correct){
+      }else if (arg1.get(key)![i].clue === Clue.Correct){
         value[i].clue = Clue.Correct;
       }
       else 
         if(value[i].isFaded()){
-          value[i].clue = dectrimentClue(value[i].clue);
-        }//else{
-          //value[i].clue = arg1[key][i].clue;
-        //}
+            value[i].clue = decrimentClue(value[i].clue);
+        }else{
+          value[i].clue = arg1.get(key)![i].clue;
+        }
     }
   });    
   
@@ -52,7 +52,7 @@ function Game(props: GameProps) {
   const [guesses, setGuesses] = useState<string[]>([]);
   const [currentGuess, setCurrentGuess] = useState<string>("");
   const [target, setTarget] = useState<Map<number, CluedLetter[]>>(() => {return props.target});
-  const [wordLength, setWordLength] = useState(() => { return target.size});
+  const [letterInfo, setLetterInfo] = useState<Map<string, Clue>>(() => new Map<string, Clue>());
   const [hint, setHint] = useState<string>('Make your first guess!');
   const tableRef = useRef<HTMLTableElement>(null);
   const startNextGame = () => {
@@ -95,26 +95,28 @@ function Game(props: GameProps) {
       return;
     }
     if (/^[a-z]$/i.test(key)) {
-      setCurrentGuess((guess) =>
-        (guess + key.toLowerCase()).slice(0, wordLength)
-      );
+      setCurrentGuess(key.toLowerCase());
       tableRef.current?.focus();
       setHint("");
-      setGuesses((guesses) => guesses.concat([key]));
-      setTarget((t) => mergeClues(new Map(target), clue(guesses.concat([key]).join(''), target)));
-    } else if (key === "Enter") {
-      setCurrentGuess((guess) => "");
-      const gameOver = (verbed: string) =>
-        `You ${verbed})`;
-
-      if (allDone(target)) {
-        setHint(gameOver("won"));
-        setGameState(GameState.Won);
-      } else {
-        setHint("");
-       // speak(describeClue(clue(currentGuess, target)));
+      setGuesses((guesses) => guesses.concat([key.toLowerCase()]));
+      setTarget((t) => mergeClues(new Map(t), clue(guesses.concat([key.toLowerCase()]).join(''), target)));
+      let newLetters = new Map(letterInfo);
+      for(const cl of guessesNotInTarget(key.toLowerCase(), target)){
+        if(cl.clue !== undefined){
+          newLetters.set(cl.letter.toLowerCase(),cl.clue);
+        }
       }
+      if(newLetters.size != 0){
+        setLetterInfo(new Map([...letterInfo, ...newLetters]));
+      }
+      
+    } 
+
+    if (allDone(target)) {
+      setHint("You won!");
+      setGameState(GameState.Won);
     }
+    
   };
 
   const onKeyDown = useCallback((e: KeyboardEvent) => {
@@ -132,20 +134,12 @@ function Game(props: GameProps) {
     return () => {
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [currentGuess, gameState, onKeyDown]);
+  }, [currentGuess, gameState, onKeyDown, guesses]);
 
-  let letterInfo = new Map<string, Clue>();
+  
   const tableRows = Array(1)
     .fill(undefined)
     .map((_, i) => {
-      const guess = [...guesses, currentGuess][i] ?? "";
-      
-      for(const cl of guessesNotInTarget(guess, target)){
-        if(cl.clue !== undefined){
-          letterInfo.set(cl.letter.toLowerCase(),cl.clue);
-        }
-      }
-      
       return (
         <Passage
           key={i}
@@ -161,7 +155,7 @@ function Game(props: GameProps) {
         />
       );
     }));
-
+    const fadedLetters = Array.from(target.values()).flat().filter((x) => x.isFaded()).map((x) => x.letter).filter(onlyUnique)
   return (
     <div className="Game" style={{ display: props.hidden ? "none" : "block" }}>
       <div
@@ -207,7 +201,7 @@ function Game(props: GameProps) {
                     .map((guess) =>
                       //clue(guess, target)
                       []
-                        .map((c) => emoji[c.clue ?? 0])
+                        .map((c) => emoji[c ?? 0])
                         .join("")
                     )
                     .join("\n")
@@ -227,7 +221,7 @@ export default Game;
 
 
 function allDone(target: Map<number, CluedLetter[]>):boolean {
-  throw new Error("Function not implemented.");
+  return Array.from(target.values()).flat().filter((x) => x.clue !== Clue.Punctuation && x.clue !== Clue.Correct && x.clue !== Clue.Space).length === 0
 }
 
 

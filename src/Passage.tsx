@@ -1,3 +1,4 @@
+import { JsxEmit } from "typescript";
 import { clueClass, CluedLetter, ICluedLetter, Clue } from "./clue";
 
 interface PassageProps {
@@ -6,7 +7,7 @@ interface PassageProps {
 }
 
 export function Passage(props: PassageProps) {
-  const wordDivs = [];
+  const wordDivs:React.InputHTMLAttributes<HTMLInputElement>[] = [];
   props.cluedLetters.forEach((value, key) =>{
     let withSpace = [];
     value.forEach((x) => {withSpace.push(x)});

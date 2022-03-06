@@ -14,7 +14,6 @@ export function Keyboard(props: KeyboardProps) {
         .split("")
         .map((key) => key.replace("B", "Backspace").replace("E", "Enter"))
     );
-
   return (
     <div className="Game-keyboard" aria-hidden="true">
       {keyboard.map((row, i) => (

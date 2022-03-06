@@ -23,7 +23,7 @@ export function wordsMapFromText(target: string): Map<number, CluedLetter[]>{
       if(isPunctuation(n)){
         wordsCluedLetters.push(new CluedLetter(n,Clue.Punctuation));
       }else{
-        wordsCluedLetters.push(new CluedLetter(n));
+        wordsCluedLetters.push(new CluedLetter(n, undefined));
       }
     }
     wordsMap.set(parseInt(word),wordsCluedLetters);
@@ -32,9 +32,8 @@ export function wordsMapFromText(target: string): Map<number, CluedLetter[]>{
 }
 
 export function randomTarget() {
-
-  let candidate: string = bookify(pick(targets), Language.English);
-  candidate = '1 Samuel 2: 3';
+  const candidate: string = bookify(pick(targets), Language.English);
+  //candidate = '1 Samuel 2: 3';
   const url = "http://localhost:3000/api/passage/?search=" + encodeURIComponent(candidate);
   return $.ajax({
     url: url,
