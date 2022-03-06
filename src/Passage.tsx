@@ -1,39 +1,51 @@
-import { Clue, clueClass, ICluedLetter, clueWord } from "./clue";
+import { clueClass, CluedLetter, ICluedLetter, Clue } from "./clue";
 
 interface PassageProps {
-  passageLength: number;
-  cluedLetters: ICluedLetter[];
+  cluedLetters: Map<number, ICluedLetter[]>;
   annotation?: string;
 }
 
 export function Passage(props: PassageProps) {
-  const letterDivs = props.cluedLetters
+  const wordDivs = [];
+  props.cluedLetters.forEach((value, key) =>{
+    let withSpace = [];
+    value.forEach((x) => {withSpace.push(x)});
+    withSpace.push( new CluedLetter(" ",Clue.Space));
+
+    const letterDivs = withSpace
     .map(({ clue, letter }, i) => {
-        let letterClass = "Row-letter";
-        if(letter === " "){
-          letterClass += " Space";
-        }else if (clue !== undefined) {
-          letterClass += " " + clueClass(clue);
-        }
+      let letterClass = "Row-letter " + clueClass(clue);
 
       return (
         <div
-          key={i}
+          key={key+"w" + i}
           className={letterClass}
           aria-live={"off"}
-          aria-label={letter.toUpperCase()}
+          aria-label={clue === undefined ? "" : letter.toUpperCase()}
         >
-          {letter}
+          {clue === undefined ? "" : letter}
         </div>
       );
     });
+    wordDivs.push (
+      <div
+          key={key+"p"}
+          className={"word word" + letterDivs.length}
+        >
+          {letterDivs}
+        </div>
+
+    )
+  
+});
+  
   let wordClass = "Row Row-locked-in";
   return (
     <div className={wordClass}>
-      {letterDivs}
       {props.annotation && (
         <span className="Row-annotation">{props.annotation}</span>
       )}
+      {wordDivs}
     </div>
   );
 }

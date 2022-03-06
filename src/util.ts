@@ -1,5 +1,4 @@
-export const gameName = "BUBLI";
-export const maxGuesses = 16;
+export const gameName = "BIBLI";
 
 function mulberry32(a: number) {
   return function () {

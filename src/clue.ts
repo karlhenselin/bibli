@@ -1,6 +1,7 @@
 export enum Clue {
   Absent,
   Space,
+  Punctuation,
   Fade4,
   Fade3,
   Fade2,
@@ -8,18 +9,17 @@ export enum Clue {
   Fade0,
   Correct
 }
-export function dectrimentClue(clue: ICluedLetter) : ICluedLetter{
-  if(clue.clue === Clue.Fade0 ){
-    clue.clue = Clue.Fade1;
-  } else if(clue.clue === Clue.Fade1 ){
-    clue.clue = Clue.Fade2;
-  } else if(clue.clue === Clue.Fade2 ){
-    clue.clue = Clue.Fade3;
-  } else if(clue.clue === Clue.Fade3 ){
-    clue.clue = Clue.Fade4;
-  } else if(clue.clue === Clue.Fade4 ){
-    clue.clue = undefined;
-    clue.letter = "";
+export function dectrimentClue(clue: Clue) : Clue{
+  if(clue === Clue.Fade0 ){
+    clue = Clue.Fade1;
+  } else if(clue === Clue.Fade1 ){
+    clue = Clue.Fade2;
+  } else if(clue === Clue.Fade2 ){
+    clue = Clue.Fade3;
+  } else if(clue === Clue.Fade3 ){
+    clue = Clue.Fade4;
+  } else if(clue === Clue.Fade4 ){
+    clue = undefined;
   }
   return clue
 }
@@ -27,6 +27,14 @@ export interface ICluedLetter {
   clue?: Clue;
   letter: string;
   isFaded(): boolean;
+}
+
+function lettersOf(cluedLetters: CluedLetter[]): string {
+  return cluedLetters.map((x) => x.letter).join('');
+}
+
+function lettersNoPunctuationOf(cluedLetters: CluedLetter[]): string {
+  return cluedLetters.map((x) => x.letter).filter((x) => !isPunctuation(x)).join('');
 }
 
 export class CluedLetter implements ICluedLetter {
@@ -63,7 +71,7 @@ function wordInGuesses(word: string, guesses: string): boolean{
     return false;
   }
 
-  let tempWord = word.replace(guesses.slice(-1), "");
+  let tempWord = word.replaceAll(guesses.slice(-1), "");
   if(tempWord.length < wordLength){
     return wordInGuesses(tempWord, guesses.substring(0,guesses.length-1));
   }
@@ -81,7 +89,7 @@ function checkAdditionalLetters(word: string, guesses: string, cluedLetters: Clu
     return false;
   }
 
-  let tempWord = word.replace(guesses.slice(-1), "");
+  let tempWord = word.replaceAll(guesses.slice(-1), "");
   if(tempWord.length < wordLength){
     let letters: string[] = word.split("");
     for(let i in letters){
@@ -89,7 +97,7 @@ function checkAdditionalLetters(word: string, guesses: string, cluedLetters: Clu
         if(cluedLetters[i].clue === undefined){
           cluedLetters[i].clue = Clue.Fade0;
         }else{
-          cluedLetters[i] = dectrimentClue(cluedLetters[i] );
+          cluedLetters[i].clue = dectrimentClue(cluedLetters[i].clue);
         }
         cluedLetters[i].letter = letters[i];
       }
@@ -104,53 +112,43 @@ function onlyUnique(value: any, index: number, self: any[]) {
   return self.indexOf(value) === index;
 }
 
-function isFaded(value: ICluedLetter, index: number, self: ICluedLetter[]) {
-  return value.isFaded();
+
+function isFadedOrPunctuation(value: ICluedLetter, index: number, self: ICluedLetter[]) {
+  return value.isFaded() || isPunctuation(value.letter);
 }
 
-export function clue(guesses: string, target: string): CluedLetter[] {
-  const clues: CluedLetter[] = [];
-  const wordsMap: Map<string, CluedLetter[]> =  new Map<string, CluedLetter[]>();
-  const words: string[] = target.split(" ");
-  for(const word of words){
-    let wordsCluedLetters: CluedLetter[] = [];
-    let letters = word.split('');
-    for(var n in letters){
-      wordsCluedLetters.push(new CluedLetter(""));
-    }
-    wordsMap.set(word,wordsCluedLetters);
-  }
-  
-  wordsMap.forEach((cluedLetters: CluedLetter[], word: string) => {
+
+export function isPunctuation(l: string): boolean{
+  return /[,.:;?1234567890!@#$%^&*()-=_+]/.test(l);
+}
+
+
+export function clue(guesses: string, wordsMap: Map<number, CluedLetter[]>): Map<number, CluedLetter[]> {
+  wordsMap.forEach((cluedLetters: CluedLetter[], word: number) => {
     //check for whole words first.
-    if(wordInAllGuesses(word.toUpperCase(), guesses.toUpperCase())){
+    if(wordInAllGuesses(lettersNoPunctuationOf(cluedLetters).toUpperCase(), guesses.slice(-1 * Math.max(12,guesses.length)).toUpperCase())){
       for(var i = 0; i < cluedLetters.length; i++) {
-        cluedLetters[i].clue = Clue.Correct;
-        cluedLetters[i].letter = word.substring(i,i+1);
+        if(cluedLetters[i].clue !== Clue.Punctuation){
+          cluedLetters[i].clue = Clue.Correct;
+          cluedLetters[i].letter = lettersOf(cluedLetters).substring(i,i+1);
+        }
       }
     }
 
     //check for individual letters next.
-    checkAdditionalLetters(word.toUpperCase(),guesses.toUpperCase(),cluedLetters);
+    checkAdditionalLetters(lettersNoPunctuationOf(cluedLetters).toUpperCase(),guesses.toUpperCase(),cluedLetters);
 
-   
-
-    //now merge that into the array to return.
-    for(var j = 0; j < cluedLetters.length; j++) {
-      clues.push(cluedLetters[j])
-    }
-    clues.push(new CluedLetter(" ",Clue.Space));
   })
   
-  return clues.slice(0,-1);
+  return wordsMap;
 }
 
-export function guessesNotInTarget(guesses: string, target: string): CluedLetter[]
+export function guessesNotInTarget(guesses: string, target: Map<number, CluedLetter[]>): CluedLetter[]
 //Mark any guesses that aren't any good at all as absent to prevent double guesses.
 {
   let absent: CluedLetter[] = [];
   const uniqueGuesses = guesses.toUpperCase().split('').filter(onlyUnique);
-  const usedLetters = target.toUpperCase().split('').filter(onlyUnique);
+  const usedLetters: string = Array.from(target.values()).flat().map((x) => x.letter.toUpperCase()).filter(onlyUnique).join('');
   for(var guess of uniqueGuesses){
     if(usedLetters.indexOf(guess) === -1){
       absent.push(new CluedLetter(guess,Clue.Absent));
@@ -163,6 +161,8 @@ export function clueClass(clue: Clue): string {
     return "letter-absent";
   } else if (clue === Clue.Space) {
     return "letter-space";
+  } else if (clue === Clue.Punctuation) {
+    return "letter-punctuation";
   }else if (clue === Clue.Fade0) {
     return "letter-fade0";
   }else if (clue === Clue.Fade1) {
@@ -176,7 +176,7 @@ export function clueClass(clue: Clue): string {
   }else if (clue === Clue.Correct) {
     return "letter-correct";
   }
-  return "";
+  return "letter-hidden";
 }
 
 export function clueWord(clue: Clue): string {
@@ -193,20 +193,10 @@ export function describeClue(clue: CluedLetter[]): string {
     .join(", ");
 }
 
-export function clueFadedWords(cluedLetters: ICluedLetter[]) {
-  let index: number = 0;
-  const lettersArray: string[] = cluedLetters.map((cl: ICluedLetter) => {
-    if( cl.letter === ''){
-      return "~";
+export function clueFadedWords(cluedLetters: Map<number, CluedLetter[]>) {
+  cluedLetters.forEach((word: CluedLetter[]) => {
+    if(word.length === word.filter(isFadedOrPunctuation).length){
+      word.forEach((x: ICluedLetter) => x.clue = Clue.Correct);
     }
-    return cl.letter;
-    ;
   });
-  const words: string[] = lettersArray.join('').split(' ');
-  for(let word of words){
-    if(word.length === cluedLetters.slice(index,word.length + index).filter(isFaded).length){
-      cluedLetters.slice(index,word.length + index).forEach((x: ICluedLetter) => x.clue = Clue.Correct);
-    }
-    index += word.length + 1;
-  }
 }
