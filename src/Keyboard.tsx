@@ -14,7 +14,6 @@ export function Keyboard(props: KeyboardProps) {
         .split("")
         .map((key) => key.replace("B", "Backspace").replace("E", "Enter"))
     );
-
   return (
     <div className="Game-keyboard" aria-hidden="true">
       {keyboard.map((row, i) => (
@@ -25,6 +24,21 @@ export function Keyboard(props: KeyboardProps) {
             const clue = props.letterInfo.get(label);
             if (clue === Clue.Absent) {
               className += " " + clueClass(Clue.Absent);
+              shouldDisable = true;
+            }
+            if (clue === Clue.Fade0) {
+              shouldDisable = true;
+            }
+            if (clue === Clue.Fade1) {
+              shouldDisable = true;
+            }
+            if (clue === Clue.Fade2) {
+              shouldDisable = true;
+            }
+            if (clue === Clue.Fade3) {
+              shouldDisable = true;
+            }
+            if (clue === Clue.Fade4) {
               shouldDisable = true;
             }
             if (label.length > 1) {

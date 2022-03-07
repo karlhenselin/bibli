@@ -9,30 +9,29 @@ body {
 
 .Row {
   display: flex;
-  align-items: center;
-  justify-content: center;
   flex-flow: row wrap;
 }
 
 .Row-letter {
   margin: 2px;
   border: 2px solid rgba(128, 128, 128, 0.8);
-  flex: 1;
-  max-width: 40px;
+  flex: 1 1;
+  max-width: 30px;
   min-width: 30px;
-  height: 40px;
-  font-size: 28px;
+  height: 30px;
+  font-size: 22px;
   display: flex;
   justify-content: center;
   align-items: center;
   text-transform: uppercase;
   font-weight: bold;
 }
-.Row-letter.Space {
-  max-width: 4000px;
-  width:100%;
+.Row-letter.letter-space {
+  max-width: 30px;
+  width: 3px;
   border: none;
   margin: 1%;
+  min-width: 15px;
 }
 .Row-letter-color {
   margin: 2px;
@@ -131,22 +130,65 @@ table.Game-rows > tbody {
   outline: none;
 }
 
+.word{
+  max-height: 40px;
+    /* max-width: fit-content; */
+    flex: 1 1;
+    display: flex;
+}
+
 .letter-correct {
   border: 2px solid rgba(0, 0, 0, 0.3);
   background-color: rgb(87, 172, 120);
   color: white !important;
 }
-
-.letter-elsewhere {
-  border: 2px dotted rgba(0, 0, 0, 0.3);
-  background-color: #e9c601;
-  color: white !important;
+.letter-hidden {
+  border: 2px solid rgba(0, 0, 0, 0.3);
+  background-color: #eee;
+  color: #eee !important;
+}
+.letter-punctuation {
+  border: none;
+  background-color: #eee;
+  color: rgb(0, 0, 0) !important;
+  max-width: fit-content;
+  min-width: 0px;
 }
 
 .letter-absent {
   border: 2px solid rgb(162, 162, 162);
   background: rgb(162, 162, 162);
   color: white !important;
+}
+
+.letter-fade0 {
+  border: 2px solid rgba(0, 0, 0, 0.3);
+  background-color: rgba(87, 172, 120, 0.9);
+  color: rgba(255,255,255,0.9) !important;
+}
+
+.letter-fade1 {
+  border: 2px solid rgba(0, 0, 0, 0.3);
+  background-color: rgba(87, 172, 120, 0.8);
+  color: rgba(255,255,255,0.8) !important;
+}
+
+.letter-fade2 {
+  border: 2px solid rgba(0, 0, 0, 0.3);
+  background-color: rgba(87, 172, 120, 0.7);
+  color: rgba(255,255,255,0.7) !important;
+}
+
+.letter-fade3 {
+  border: 2px solid rgba(0, 0, 0, 0.3);
+  background-color: rgba(87, 172, 120, 0.6);
+  color: rgba(255,255,255,0.6) !important;
+}
+
+.letter-fade4 {
+  border: 2px solid rgba(0, 0, 0, 0.3);
+  background-color: rgba(87, 172, 120, 0.5);
+  color: rgba(255,255,255,0.5) !important;
 }
 
 body.dark {

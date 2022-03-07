@@ -1,8 +1,65 @@
 import "./App.css";
-import { maxGuesses, seed, urlParam } from "./util";
+import { seed, urlParam,pick } from "./util";
 import Game from "./Game";
 import { useEffect, useState } from "react";
 import { About } from "./About";
+import {languageOf} from "./books";
+import {Language, bookify} from "./books";
+import targetList from "./targets.json";
+import { CluedLetter,isPunctuation, Clue} from "./clue";
+
+var $ = require( "jquery" );
+const targets = targetList;
+let target :Map<number, CluedLetter[]>;
+randomTarget();
+
+export function wordsMapFromText(target: string): Map<number, CluedLetter[]>{
+  const wordsMap: Map<number, CluedLetter[]> =  new Map<number, CluedLetter[]>();
+  const words: string[] = target.split(" ");
+  for(const word in words){
+    let wordsCluedLetters: CluedLetter[] = [];
+    let letters = words[word].split('');
+    for(var n of letters){
+      if(isPunctuation(n)){
+        wordsCluedLetters.push(new CluedLetter(n,Clue.Punctuation));
+      }else{
+        wordsCluedLetters.push(new CluedLetter(n, undefined));
+      }
+    }
+    wordsMap.set(parseInt(word),wordsCluedLetters);
+  }
+  return wordsMap;
+}
+
+export function randomTarget() {
+  const candidate: string = bookify(pick(targets), Language.English);
+  //candidate = '1 Samuel 2: 3';
+  const url = "http://localhost:3000/api/passage/?search=" + encodeURIComponent(candidate);
+  return $.ajax({
+    url: url,
+    context: document.body,
+    async: false
+
+  }).done(function(data: any) {
+    var thetext = $(data).find(".result-text-style-normal");
+      thetext.find('h3').remove();
+      thetext.find('a').remove();
+      thetext.find('.versenum').remove();//kill the verse numbers.
+      thetext.find('.chapternum').remove();//kill all #'s (verse numbers)
+      thetext.find('.footnotes').remove();//kill the actual footnotes.
+      thetext.find('.footnote').remove();//kill the actual footnotes.
+      thetext.find('.crossreference').remove();//kill the actual footnotes.
+      thetext.find('.crossrefs').remove();//get rid of crossreferences
+      thetext.find('br').replaceWith(' ');//replace <br/> with a space so that we don't get words stuck together.
+
+    const text: string = thetext.text().replace(/\s{2,}/g,' ')//get rid of all enters and doubled spaces
+    .replace(/^\s+|\s+$/g,"")//trim
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '');
+    target = wordsMapFromText(text);
+  }).catch((err: string) => {throw(err)});
+  
+  }
 
 function useSetting<T>(
   key: string,
@@ -40,14 +97,13 @@ function App() {
     window.matchMedia("(prefers-color-scheme: dark)").matches;
   const [dark, setDark] = useSetting<boolean>("dark", prefersDark);
   const [colorBlind, setColorBlind] = useSetting<boolean>("colorblind", false);
-  const [difficulty, setDifficulty] = useSetting<number>("difficulty", 0);
   const [keyboard, setKeyboard] = useSetting<string>(
     "keyboard",
     "qwertyuiop-asdfghjkl-BzxcvbnmE"
   );
   const [translation, setTranslation] = useSetting<string>(
     "translation",
-    "HCSB"
+    "HCSB-English"
   );
   
   const [enterLeft, setEnterLeft] = useSetting<boolean>("enter-left", false);
@@ -77,7 +133,7 @@ function App() {
   return (
     <div className={"App-container" + (colorBlind ? " color-blind" : "")}>
       <h1>
-        BUBLI
+        BIBLI
       </h1>
       <div className="top-right">
         {page !== "game" ? (
@@ -122,6 +178,7 @@ function App() {
             />
             <label htmlFor="colorblind-setting">High-contrast colors</label>
           </div>
+          
           <div className="Settings-setting">
           <label htmlFor="translation-setting">Translation:</label>
           <select
@@ -130,8 +187,8 @@ function App() {
               value={translation}
               onChange={(e) => setTranslation(e.target.value)}
             >
-              <option value="HCSB">Holman Christian Standard Bible (HCSB, English)</option>
-              <option value="NIV">New International Version (NIV, English)</option>
+              <option value="HCSB-English">Holman Christian Standard Bible (HCSB, English)</option>
+              <option value="NIV-English">New International Version (NIV, English)</option>
             </select>
           </div>
           <div className="Settings-setting">
@@ -160,13 +217,14 @@ function App() {
         </div>
       )}
       <Game
-        maxGuesses={maxGuesses}
         hidden={page !== "game"}
         colorBlind={colorBlind}
         keyboardLayout={keyboard.replaceAll(
           /[BE]/g,
           (x) => (enterLeft ? "EB" : "BE")["BE".indexOf(x)]
         )}
+        language={languageOf(translation.substring(translation.indexOf("-")))}
+        target={target}
       />
     </div>
   );
