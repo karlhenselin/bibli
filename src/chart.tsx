@@ -1,5 +1,3 @@
-import { FacebookShareButton, TwitterShareButton } from "react-share";
-
 export type color = string | CanvasGradient | CanvasPattern;
 
 interface ChartProps {
