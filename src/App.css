@@ -319,7 +319,7 @@ a:active {
 #chartHolder{
   position: absolute;
     width: 90%;
-    background: rgb(238 238 238 / 90%);
+    background:radial-gradient(#fff,#fffffff0);
     top: 12%;
     border-radius: 48px;
     margin: 30px 5%;
@@ -327,5 +327,5 @@ a:active {
 }
 
 #myCanvas{
-  
+  border-radius: 15px;
 }

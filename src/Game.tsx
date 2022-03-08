@@ -4,7 +4,7 @@ import { Clue, clue, guessesNotInTarget, CluedLetter, decrimentClue, clueFadedWo
 import { Keyboard } from "./Keyboard";
 import { Language } from "./books";
 import { pickTodaysTarget } from "./App";
-import { Chart } from "./chart";
+import { Chart, getCanvas } from "./chart";
 import {
   gameName
 } from "./util";
@@ -67,6 +67,20 @@ function Game(props: GameProps) {
     setGameState(GameState.Playing);
     setWon(false);
   };
+
+  async function shareWon(copiedHint: string, text?: string) {
+    const canvas = getCanvas();
+
+    canvas.toBlob(async function (blob) {
+      try {
+        const item = new ClipboardItem({ "image/png": blob });
+        await navigator.clipboard.write([item]);
+        setHint(copiedHint);
+      } catch (e) {
+        return "Copying image to clipboard failed: " + e;
+      }
+    });
+  }
 
   async function share(copiedHint: string, text?: string) {
     const url = window.location.origin + window.location.pathname
@@ -162,16 +176,14 @@ function Game(props: GameProps) {
           gridColor={"#a55ca5"}
           gridScale={5}
           won={won}
-        />
-        {hint || `\u00a0`}
+        /><div className="wonHint">
+          {hint || `\u00a0`}
+        </div>
         {gameState !== GameState.Playing && (
 
           <button
             onClick={() => {
-              const emoji = props.colorBlind
-                ? ["⬛", "🟦", "🟧"]
-                : ["⬛", "🟨", "🟩"];
-              share(
+              shareWon(
                 "Result copied to clipboard!",
                 `${gameName} ${guesses.length}\n`
               );

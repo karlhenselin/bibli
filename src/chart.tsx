@@ -1,3 +1,5 @@
+import { FacebookShareButton, TwitterShareButton } from "react-share";
+
 export type color = string | CanvasGradient | CanvasPattern;
 
 interface ChartProps {
@@ -10,7 +12,7 @@ interface ChartProps {
     won: boolean
 }
 
-function getCanvas(): HTMLCanvasElement {
+export function getCanvas(): HTMLCanvasElement {
     return document.getElementById("myCanvas") as HTMLCanvasElement;
 
 }
@@ -64,12 +66,16 @@ interface chartOptions {
 function draw(options: chartOptions) {
     const extraLeftPadding = 15;
     const ctx = getCtx();
+
     if (ctx != null && ctx != undefined) {
         let font = 20;
         ctx.font = font + 'px Arial, sans-serif';
         const canvas = getCanvas();
         const data = options.data;
-
+        ctx.save();
+        ctx.fillStyle = "#FFF";
+        ctx.fillRect(0, 0, 300, 300);
+        ctx.restore();
         if (ctx != null) {
             var maxValue = 0;
             for (var categ in options.data) {
@@ -131,7 +137,7 @@ function draw(options: chartOptions) {
 }
 
 function yourLine(ctx: CanvasRenderingContext2D, font: number, your: number, canvasActualWidth: number, padding: number, extraLeftPadding: number) {
-    const x = xOfYour(your, canvasActualWidth, extraLeftPadding);
+    const x = xOfYour(your);
     drawLine(ctx, x, padding, x, 300 - padding - 3, "#11f")
     ctx.save();
     ctx.translate(Math.min(x - font / 2, 260), 5);
@@ -140,7 +146,7 @@ function yourLine(ctx: CanvasRenderingContext2D, font: number, your: number, can
     ctx.restore();
 }
 
-function xOfYour(your: number, canvasActualWidth: number, extraLeftPadding: number): number {
+function xOfYour(your: number): number {
     return 294 - Math.min(2.22 * your, 280);
 }
 
