@@ -12,7 +12,7 @@ export function About() {
         Longer words can still be completed, but you need to type only letters that are in the word to lock it.
       </p>
       <hr />
-     
+
       <p>
         Report issues{" "}
         <a href="https://github.com/karlhenselin/bubli/issues">here</a>.

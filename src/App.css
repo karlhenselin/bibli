@@ -251,12 +251,6 @@ a:active {
   background-color: #e9c601;
 }
 
-.Game-seed-info {
-  opacity: 0.7;
-  margin-top: 1em;
-  font-variant-numeric: tabular-nums;
-}
-
 .Game-sr-feedback,
 .sr-only {
   position: absolute;
@@ -320,4 +314,18 @@ a:active {
 .App-container.color-blind .letter-elsewhere,
 .App-container.color-blind .App-about b.yellow-bg {
   background-color: #85c0f9;
+}
+
+#chartHolder{
+  position: absolute;
+    width: 90%;
+    background: rgb(238 238 238 / 90%);
+    top: 12%;
+    border-radius: 48px;
+    margin: 30px 5%;
+    padding: 30px;
+}
+
+#myCanvas{
+  
 }

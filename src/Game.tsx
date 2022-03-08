@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState,useCallback } from "react";
-import { Passage} from "./Passage";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Passage } from "./Passage";
 import { Clue, clue, guessesNotInTarget, CluedLetter, decrimentClue, clueFadedWords } from "./clue";
 import { Keyboard } from "./Keyboard";
-import {Language} from "./books";
-import {randomTarget} from "./App";
+import { Language } from "./books";
+import { pickTodaysTarget } from "./App";
+import { Chart } from "./chart";
 import {
   gameName
 } from "./util";
@@ -21,27 +22,28 @@ interface GameProps {
   keyboardLayout: string;
   language: Language;
   target: Map<number, CluedLetter[]>;
+  reference: string;
 }
 
-function mergeClues(letterStates: Map<number, CluedLetter[]>, arg1: Map<number, CluedLetter[]>): Map<number, CluedLetter[]>{
-  letterStates.forEach(function(value, key) {
-    for(const i in value){
-      if(value[i].clue === Clue.Correct
-      || value[i].clue === Clue.Punctuation
-      ){
-          //no change
-      }else if (arg1.get(key)![i].clue === Clue.Correct){
+function mergeClues(letterStates: Map<number, CluedLetter[]>, arg1: Map<number, CluedLetter[]>): Map<number, CluedLetter[]> {
+  letterStates.forEach(function (value, key) {
+    for (const i in value) {
+      if (value[i].clue === Clue.Correct
+        || value[i].clue === Clue.Punctuation
+      ) {
+        //no change
+      } else if (arg1.get(key)![i].clue === Clue.Correct) {
         value[i].clue = Clue.Correct;
       }
-      else 
-        if(value[i].isFaded()){
-            value[i].clue = decrimentClue(value[i].clue);
-        }else{
+      else
+        if (value[i].isFaded()) {
+          value[i].clue = decrimentClue(value[i].clue);
+        } else {
           value[i].clue = arg1.get(key)![i].clue;
         }
     }
-  });    
-  
+  });
+
   clueFadedWords(letterStates);
 
   return letterStates;
@@ -51,16 +53,19 @@ function Game(props: GameProps) {
   const [gameState, setGameState] = useState<GameState>(GameState.Playing);
   const [guesses, setGuesses] = useState<string[]>([]);
   const [currentGuess, setCurrentGuess] = useState<string>("");
-  const [target, setTarget] = useState<Map<number, CluedLetter[]>>(() => {return props.target});
+  const [target, setTarget] = useState<Map<number, CluedLetter[]>>(() => { return props.target });
+  const [reference, setReference] = useState<string>(() => { return props.reference });
   const [letterInfo, setLetterInfo] = useState<Map<string, Clue>>(() => new Map<string, Clue>());
   const [hint, setHint] = useState<string>('Make your first guess!');
   const tableRef = useRef<HTMLTableElement>(null);
+  const [won, setWon] = useState<boolean>(false);
   const startNextGame = () => {
-    randomTarget();
+    pickTodaysTarget();
     setHint("");
     setGuesses([]);
     setCurrentGuess("");
     setGameState(GameState.Playing);
+    setWon(false);
   };
 
   async function share(copiedHint: string, text?: string) {
@@ -102,23 +107,24 @@ function Game(props: GameProps) {
       const t = mergeClues(new Map(target), clue(guesses.concat([key.toLowerCase()]).join(''), target))
       setTarget((nt) => t);
       let newLetters = new Map(letterInfo);
-      for(const cl of guessesNotInTarget(key.toLowerCase(), target)){
-        if(cl.clue !== undefined){
-          newLetters.set(cl.letter.toLowerCase(),cl.clue);
+      for (const cl of guessesNotInTarget(key.toLowerCase(), target)) {
+        if (cl.clue !== undefined) {
+          newLetters.set(cl.letter.toLowerCase(), cl.clue);
         }
       }
-      if(newLetters.size !== 0){
+      if (newLetters.size !== 0) {
         setLetterInfo(new Map([...letterInfo, ...newLetters]));
       }
       if (allDone(t)) {
-        setHint("You won!");
+        setWon(true);
+        setHint("You solved " + reference + " in " + (guesses.length + 1) + " guesses.");
         setGameState(GameState.Won);
       }
-    } 
+    }
 
-    
-    
-  },[letterInfo, gameState, guesses, target]);
+
+
+  }, [letterInfo, gameState, guesses, target, won]);
 
   const onKeyDown = useCallback((e: KeyboardEvent) => {
     if (!e.ctrlKey && !e.metaKey) {
@@ -130,41 +136,61 @@ function Game(props: GameProps) {
   }, [onKey]);
 
   useEffect(() => {
-    
+
     window.addEventListener("keydown", onKeyDown);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [currentGuess, gameState, onKeyDown, guesses]);
 
-  
-  const tableRows = Array(1)
-    .fill(undefined)
-    .map((_, i) => {
-      return (
-        <Passage
-          key={i}
-          cluedLetters={target}
-        />
-      );
-    })
-    .concat(Array(1).fill(undefined).map((_, i) => {
-      return (
-        <Passage
-          key={2}
-          cluedLetters={new Map()}
-        />
-      );
-    }));
+
   return (
     <div className="Game" style={{ display: props.hidden ? "none" : "block" }}>
+      <div id="chartHolder" style={{ display: won ? "block" : "none" }}>
+        <Chart
+          color={"#67b6c7"}
+          data={{
+            "100+": 2,
+            "80-99": 13,
+            "60-79": 13,
+            "40-59": 14,
+            "20-39": 18,
+            "<20": 4
+          }}
+          your={guesses.length + 1}
+          padding={10}
+          gridColor={"#a55ca5"}
+          gridScale={5}
+          won={won}
+        />
+        {hint || `\u00a0`}
+        {gameState !== GameState.Playing && (
+
+          <button
+            onClick={() => {
+              const emoji = props.colorBlind
+                ? ["⬛", "🟦", "🟧"]
+                : ["⬛", "🟨", "🟩"];
+              share(
+                "Result copied to clipboard!",
+                `${gameName} ${guesses.length}\n`
+              );
+            }}
+          >
+            Share results
+          </button>
+        )}
+      </div>
       <div
         className="Game-rows"
         tabIndex={0}
         aria-label="Passage"
         ref={tableRef}
       >
-        {tableRows}
+        <Passage
+          key={0}
+          cluedLetters={target}
+        />
       </div>
       <p
         role="alert"
@@ -188,29 +214,7 @@ function Game(props: GameProps) {
         >
           Share a link to this game
         </button>{" "}
-        {gameState !== GameState.Playing && (
-          <button
-            onClick={() => {
-              const emoji = props.colorBlind
-                ? ["⬛", "🟦", "🟧"]
-                : ["⬛", "🟨", "🟩"];
-              share(
-                "Result copied to clipboard!",
-                `${gameName} ${guesses.length}\n` +
-                  guesses
-                    .map((guess) =>
-                      //clue(guess, target)
-                      []
-                        .map((c) => emoji[c ?? 0])
-                        .join("")
-                    )
-                    .join("\n")
-              );
-            }}
-          >
-            Share emoji results
-          </button>
-        )}
+
       </p>
     </div>
   );
@@ -220,7 +224,7 @@ export default Game;
 
 
 
-function allDone(target: Map<number, CluedLetter[]>):boolean {
+function allDone(target: Map<number, CluedLetter[]>): boolean {
   return Array.from(target.values()).flat().filter((x) => x.clue !== Clue.Punctuation && x.clue !== Clue.Correct && x.clue !== Clue.Space).length === 0
 }
 

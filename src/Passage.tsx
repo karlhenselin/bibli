@@ -6,39 +6,39 @@ interface PassageProps {
 }
 
 export function Passage(props: PassageProps) {
-  const wordDivs:React.InputHTMLAttributes<HTMLInputElement>[] = [];
-  props.cluedLetters.forEach((value, key) =>{
+  const wordDivs: React.InputHTMLAttributes<HTMLInputElement>[] = [];
+  props.cluedLetters.forEach((value, key) => {
     let withSpace = [];
-    value.forEach((x) => {withSpace.push(x)});
-    withSpace.push( new CluedLetter(" ",Clue.Space));
+    value.forEach((x) => { withSpace.push(x) });
+    withSpace.push(new CluedLetter(" ", Clue.Space));
 
     const letterDivs = withSpace
-    .map(({ clue, letter }, i) => {
-      let letterClass = "Row-letter " + clueClass(clue);
+      .map(({ clue, letter }, i) => {
+        let letterClass = "Row-letter " + clueClass(clue);
 
-      return (
-        <div
-          key={key+"w" + i}
-          className={letterClass}
-          aria-live={"off"}
-          aria-label={clue === undefined ? "" : letter.toUpperCase()}
-        >
-          {clue === undefined ? "" : letter}
-        </div>
-      );
-    });
-    wordDivs.push (
+        return (
+          <div
+            key={key + "w" + i}
+            className={letterClass}
+            aria-live={"off"}
+            aria-label={clue === undefined ? "" : letter.toUpperCase()}
+          >
+            {clue === undefined ? "" : letter}
+          </div>
+        );
+      });
+    wordDivs.push(
       <div
-          key={key+"p"}
-          className={"word word" + letterDivs.length}
-        >
-          {letterDivs}
-        </div>
+        key={key + "p"}
+        className={"word word" + letterDivs.length}
+      >
+        {letterDivs}
+      </div>
 
     )
-  
-});
-  
+
+  });
+
   let wordClass = "Row Row-locked-in";
   return (
     <div className={wordClass}>

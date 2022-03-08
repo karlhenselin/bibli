@@ -1,38 +1,39 @@
 import "./App.css";
-import { seed, urlParam,pick } from "./util";
+import { pick } from "./util";
 import Game from "./Game";
 import { useEffect, useState } from "react";
 import { About } from "./About";
-import {languageOf} from "./books";
-import {Language, bookify} from "./books";
+import { languageOf } from "./books";
+import { Language, bookify } from "./books";
 import targetList from "./targets.json";
-import { CluedLetter,isPunctuation, Clue} from "./clue";
+import { CluedLetter, isPunctuation, Clue } from "./clue";
 
-var $ = require( "jquery" );
+var $ = require("jquery");
 const targets = targetList;
-let target :Map<number, CluedLetter[]>;
-randomTarget();
+let target: Map<number, CluedLetter[]>;
+let candidate: string;
+pickTodaysTarget();
 
-export function wordsMapFromText(target: string): Map<number, CluedLetter[]>{
-  const wordsMap: Map<number, CluedLetter[]> =  new Map<number, CluedLetter[]>();
+export function wordsMapFromText(target: string): Map<number, CluedLetter[]> {
+  const wordsMap: Map<number, CluedLetter[]> = new Map<number, CluedLetter[]>();
   const words: string[] = target.split(" ");
-  for(const word in words){
+  for (const word in words) {
     let wordsCluedLetters: CluedLetter[] = [];
     let letters = words[word].split('');
-    for(var n of letters){
-      if(isPunctuation(n)){
-        wordsCluedLetters.push(new CluedLetter(n,Clue.Punctuation));
-      }else{
+    for (var n of letters) {
+      if (isPunctuation(n)) {
+        wordsCluedLetters.push(new CluedLetter(n, Clue.Punctuation));
+      } else {
         wordsCluedLetters.push(new CluedLetter(n, undefined));
       }
     }
-    wordsMap.set(parseInt(word),wordsCluedLetters);
+    wordsMap.set(parseInt(word), wordsCluedLetters);
   }
   return wordsMap;
 }
 
-export function randomTarget() {
-  const candidate: string = bookify(pick(targets), Language.English);
+export function pickTodaysTarget() {
+  candidate = bookify(pick(targets), Language.English);
   //candidate = '1 Samuel 2: 3';
   const url = "http://localhost:3000/api/passage/?search=" + encodeURIComponent(candidate);
   return $.ajax({
@@ -40,26 +41,25 @@ export function randomTarget() {
     context: document.body,
     async: false
 
-  }).done(function(data: any) {
+  }).done(function (data: any) {
     var thetext = $(data).find(".result-text-style-normal");
-      thetext.find('h3').remove();
-      thetext.find('a').remove();
-      thetext.find('.versenum').remove();//kill the verse numbers.
-      thetext.find('.chapternum').remove();//kill all #'s (verse numbers)
-      thetext.find('.footnotes').remove();//kill the actual footnotes.
-      thetext.find('.footnote').remove();//kill the actual footnotes.
-      thetext.find('.crossreference').remove();//kill the actual footnotes.
-      thetext.find('.crossrefs').remove();//get rid of crossreferences
-      thetext.find('br').replaceWith(' ');//replace <br/> with a space so that we don't get words stuck together.
+    thetext.find('h3').remove();
+    thetext.find('a').remove();
+    thetext.find('.versenum').remove();//kill the verse numbers.
+    thetext.find('.chapternum').remove();//kill all #'s (verse numbers)
+    thetext.find('.footnotes').remove();//kill the actual footnotes.
+    thetext.find('.footnote').remove();//kill the actual footnotes.
+    thetext.find('.crossreference').remove();//kill the actual footnotes.
+    thetext.find('.crossrefs').remove();//get rid of crossreferences
+    thetext.find('br').replaceWith(' ');//replace <br/> with a space so that we don't get words stuck together.
 
-    const text: string = thetext.text().replace(/\s{2,}/g,' ')//get rid of all enters and doubled spaces
-    .replace(/^\s+|\s+$/g,"")//trim
-    .replace(/[\u2018\u2019]/g, "'")
-    .replace(/[\u201C\u201D]/g, '');
+    const text: string = thetext.text().replace(/\s{2,}/g, ' ')//get rid of all enters and doubled spaces
+      .replace(/^\s+|\s+$/g, "")//trim
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u201C\u201D]/g, '');
     target = wordsMapFromText(text);
-  }).catch((err: string) => {throw(err)});
-  
-  }
+  }).catch((err: string) => { throw (err) });
+}
 
 function useSetting<T>(
   key: string,
@@ -78,16 +78,11 @@ function useSetting<T>(
       const v = value instanceof Function ? value(current) : value;
       setCurrent(v);
       window.localStorage.setItem(key, JSON.stringify(v));
-    } catch (e) {}
+    } catch (e) { }
   };
   return [current, setSetting];
 }
 
-const now = new Date();
-const todaySeed =
-  now.toLocaleDateString("en-US", { year: "numeric" }) +
-  now.toLocaleDateString("en-US", { month: "2-digit" }) +
-  now.toLocaleDateString("en-US", { day: "2-digit" });
 
 function App() {
   type Page = "game" | "about" | "settings";
@@ -105,14 +100,11 @@ function App() {
     "translation",
     "HCSB-English"
   );
-  
+
   const [enterLeft, setEnterLeft] = useSetting<boolean>("enter-left", false);
 
   useEffect(() => {
     document.body.className = dark ? "dark" : "";
-    if (urlParam("today") !== null || urlParam("todas") !== null) {
-      document.location = "?seed=" + todaySeed;
-    }
     setTimeout(() => {
       // Avoid transition on page load
       document.body.style.transition = "0.3s background-color ease-out";
@@ -153,9 +145,6 @@ function App() {
           visibility: page === "game" ? "visible" : "hidden",
         }}
       >
-        <a href={seed ? "?random" : "?seed=" + todaySeed}>
-          {seed ? "Random" : "Today's"}
-        </a>
       </div>
       {page === "about" && <About />}
       {page === "settings" && (
@@ -178,10 +167,10 @@ function App() {
             />
             <label htmlFor="colorblind-setting">High-contrast colors</label>
           </div>
-          
+
           <div className="Settings-setting">
-          <label htmlFor="translation-setting">Translation:</label>
-          <select
+            <label htmlFor="translation-setting">Translation:</label>
+            <select
               name="translation-setting"
               id="translation-setting"
               value={translation}
@@ -225,6 +214,7 @@ function App() {
         )}
         language={languageOf(translation.substring(translation.indexOf("-")))}
         target={target}
+        reference={candidate}
       />
     </div>
   );
