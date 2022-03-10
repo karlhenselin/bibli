@@ -10,9 +10,7 @@ import { CluedLetter, isPunctuation, Clue } from "./clue";
 
 var $ = require("jquery");
 const targets = targetList;
-let target: Map<number, CluedLetter[]>;
 let candidate: string;
-pickTodaysTarget();
 
 export function wordsMapFromText(target: string): Map<number, CluedLetter[]> {
   const wordsMap: Map<number, CluedLetter[]> = new Map<number, CluedLetter[]>();
@@ -32,34 +30,7 @@ export function wordsMapFromText(target: string): Map<number, CluedLetter[]> {
   return wordsMap;
 }
 
-export function pickTodaysTarget() {
-  candidate = bookify(pick(targets), Language.English);
-  //candidate = '1 Samuel 2: 3';
-  const url = "http://localhost:3000/api/passage/?search=" + encodeURIComponent(candidate);
-  return $.ajax({
-    url: url,
-    context: document.body,
-    async: false
 
-  }).done(function (data: any) {
-    var thetext = $(data).find(".result-text-style-normal");
-    thetext.find('h3').remove();
-    thetext.find('a').remove();
-    thetext.find('.versenum').remove();//kill the verse numbers.
-    thetext.find('.chapternum').remove();//kill all #'s (verse numbers)
-    thetext.find('.footnotes').remove();//kill the actual footnotes.
-    thetext.find('.footnote').remove();//kill the actual footnotes.
-    thetext.find('.crossreference').remove();//kill the actual footnotes.
-    thetext.find('.crossrefs').remove();//get rid of crossreferences
-    thetext.find('br').replaceWith(' ');//replace <br/> with a space so that we don't get words stuck together.
-
-    const text: string = thetext.text().replace(/\s{2,}/g, ' ')//get rid of all enters and doubled spaces
-      .replace(/^\s+|\s+$/g, "")//trim
-      .replace(/[\u2018\u2019]/g, "'")
-      .replace(/[\u201C\u201D]/g, '');
-    target = wordsMapFromText(text);
-  }).catch((err: string) => { throw (err) });
-}
 
 function useSetting<T>(
   key: string,
@@ -92,6 +63,7 @@ function App() {
     window.matchMedia("(prefers-color-scheme: dark)").matches;
   const [dark, setDark] = useSetting<boolean>("dark", prefersDark);
   const [colorBlind, setColorBlind] = useSetting<boolean>("colorblind", false);
+  const [refresh, doRefresh] = useState(0);
   const [keyboard, setKeyboard] = useSetting<string>(
     "keyboard",
     "qwertyuiop-asdfghjkl-BzxcvbnmE"
@@ -100,8 +72,48 @@ function App() {
     "translation",
     "HCSB-English"
   );
+  const [target, setTarget] = useState<Map<number, CluedLetter[]>>(new Map());
 
   const [enterLeft, setEnterLeft] = useSetting<boolean>("enter-left", false);
+  if (target.size == 0) {
+    pickTodaysTarget(translation);
+  }
+  function pickTodaysTarget(translation: string) {
+    candidate = bookify(pick(targets), Language.English);
+    //candidate = '1 Samuel 2: 3';
+    let url: string;
+    if (translation != "") {
+      url = "http://localhost:3000/api/passage/?search=" + encodeURIComponent(candidate) + "&version=" + encodeURIComponent(translation.substring(0, translation.indexOf("-")));
+    } else {
+      url = "http://localhost:3000/api/passage/?search=" + encodeURIComponent(candidate);
+    }
+
+    $.ajax({
+      url: url,
+      context: document.body,
+      async: false
+
+    }).done(function (data: any) {
+      var thetext = $(data).find(".result-text-style-normal");
+      thetext.find('h3').remove();
+      thetext.find('a').remove();
+      thetext.find('.versenum').remove();//kill the verse numbers.
+      thetext.find('.chapternum').remove();//kill all #'s (verse numbers)
+      thetext.find('.footnotes').remove();//kill the actual footnotes.
+      thetext.find('.footnote').remove();//kill the actual footnotes.
+      thetext.find('.crossreference').remove();//kill the actual footnotes.
+      thetext.find('.crossrefs').remove();//get rid of crossreferences
+      thetext.find('br').replaceWith(' ');//replace <br/> with a space so that we don't get words stuck together.
+
+      const text: string = thetext.text().replace(/\s{2,}/g, ' ')//get rid of all enters and doubled spaces
+        .replace(/^\s+|\s+$/g, "")//trim
+        .replace(/[\u2018\u2019]/g, "'")
+        .replace(/[\u201C\u201D]/g, '');
+        
+      setTarget(wordsMapFromText(text));
+
+    }).catch((err: string) => { throw (err) });
+  }
 
   useEffect(() => {
     document.body.className = dark ? "dark" : "";
@@ -169,15 +181,24 @@ function App() {
           </div>
 
           <div className="Settings-setting">
-            <label htmlFor="translation-setting">Translation:</label>
+            <label htmlFor="translation-setting">Bible:</label>
             <select
               name="translation-setting"
               id="translation-setting"
               value={translation}
-              onChange={(e) => setTranslation(e.target.value)}
+              onChange={(e) => {
+                setTranslation(e.target.value);
+                pickTodaysTarget(e.target.value);
+                doRefresh(prev => prev + 1);
+              }}
             >
               <option value="HCSB-English">Holman Christian Standard Bible (HCSB, English)</option>
               <option value="NIV-English">New International Version (NIV, English)</option>
+              <option value="LBLA-Spanish">La Biblia de las Américas (LBLA, Español)</option>
+              <option value="PDT-Spanish">Palabra de Dios para Todos (PDT, Español)</option>
+              <option value="LUTH1545-German">Luther Bible 1545 (LUTH, Deutsch)</option>
+              
+              
             </select>
           </div>
           <div className="Settings-setting">
@@ -205,17 +226,20 @@ function App() {
           </div>
         </div>
       )}
-      <Game
-        hidden={page !== "game"}
-        colorBlind={colorBlind}
-        keyboardLayout={keyboard.replaceAll(
-          /[BE]/g,
-          (x) => (enterLeft ? "EB" : "BE")["BE".indexOf(x)]
-        )}
-        language={languageOf(translation.substring(translation.indexOf("-")))}
-        target={target}
-        reference={candidate}
-      />
+      {target.size > 0 && 
+        <Game
+          hidden={page !== "game"}
+          refresh={refresh}
+          colorBlind={colorBlind}
+          keyboardLayout={keyboard.replaceAll(
+            /[BE]/g,
+            (x) => (enterLeft ? "EB" : "BE")["BE".indexOf(x)]
+          )}
+          language={languageOf(translation.substring(translation.indexOf("-")))}
+          target={target}
+          reference={candidate}
+          translation={translation}
+        />}
     </div>
   );
 }

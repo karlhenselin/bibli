@@ -25,6 +25,7 @@ body {
   align-items: center;
   text-transform: uppercase;
   font-weight: bold;
+  transition: all .3s ease-out;
 }
 .Row-letter.letter-space {
   max-width: 30px;
@@ -137,9 +138,24 @@ table.Game-rows > tbody {
     display: flex;
 }
 
+@keyframes TransitioningBackground {
+  0% {
+    background-position: 26% 98%;
+  }
+  50% {
+    background-position: 27% 96%;
+  }
+  100% {
+    background-position: 26% 98%;
+  }
+}
+
 .letter-correct {
   border: 2px solid rgba(0, 0, 0, 0.3);
-  background-color: rgb(87, 172, 120);
+  background-color: rgb(24, 137, 68);
+  background-image: linear-gradient(45deg, green,green, gold,green, green);
+  background-size: 400% 400%;
+  animation: TransitioningBackground 4s ease infinite;
   color: white !important;
 }
 .letter-hidden {

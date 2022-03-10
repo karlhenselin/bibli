@@ -3,7 +3,6 @@ import { Passage } from "./Passage";
 import { Clue, clue, guessesNotInTarget, CluedLetter, decrimentClue, clueFadedWords } from "./clue";
 import { Keyboard } from "./Keyboard";
 import { Language } from "./books";
-import { pickTodaysTarget } from "./App";
 import { Chart, getCanvas } from "./chart";
 import {
   gameName
@@ -23,7 +22,10 @@ interface GameProps {
   language: Language;
   target: Map<number, CluedLetter[]>;
   reference: string;
+  translation: string;
+  refresh: number;
 }
+
 
 function mergeClues(letterStates: Map<number, CluedLetter[]>, arg1: Map<number, CluedLetter[]>): Map<number, CluedLetter[]> {
   letterStates.forEach(function (value, key) {
@@ -55,25 +57,37 @@ function Game(props: GameProps) {
   const [currentGuess, setCurrentGuess] = useState<string>("");
   const [target, setTarget] = useState<Map<number, CluedLetter[]>>(() => { return props.target });
   const [reference, setReference] = useState<string>(() => { return props.reference });
+  const [translation, setTranslation] = useState<string>(() => { return props.translation });
   const [letterInfo, setLetterInfo] = useState<Map<string, Clue>>(() => new Map<string, Clue>());
   const [hint, setHint] = useState<string>('Make your first guess!');
   const tableRef = useRef<HTMLTableElement>(null);
   const [won, setWon] = useState<boolean>(false);
   const startNextGame = () => {
-    pickTodaysTarget();
     setHint("");
     setGuesses([]);
     setCurrentGuess("");
     setGameState(GameState.Playing);
     setWon(false);
+    setLetterInfo(new Map<string, Clue>());
   };
+
+  useEffect(() => {
+    performRefresh(); //children function of interest
+  }, [props.refresh]);
+
+  function performRefresh() {
+    setTarget(props.target);
+    setReference(props.reference);
+    setTranslation(props.translation);
+    startNextGame();
+  }
 
   async function shareWon(copiedHint: string, text?: string) {
     const canvas = getCanvas();
 
     canvas.toBlob(async function (blob) {
       try {
-        const item = new ClipboardItem({ "image/png": blob });
+        const item = new ClipboardItem({ "image/png": blob! });
         await navigator.clipboard.write([item]);
         setHint(copiedHint);
       } catch (e) {
@@ -131,7 +145,7 @@ function Game(props: GameProps) {
       }
       if (allDone(t)) {
         setWon(true);
-        setHint("You solved " + reference + " in " + (guesses.length + 1) + " guesses.");
+        setHint("You solved " + reference + " (" + translation.substring(0, translation.indexOf("-")) + ") in " + (guesses.length + 1) + " guesses.");
         setGameState(GameState.Won);
       }
     }
@@ -157,26 +171,121 @@ function Game(props: GameProps) {
     };
   }, [currentGuess, gameState, onKeyDown, guesses]);
 
+  function getData():{[key: string]: number}{
+    const diff = Array.from(target.values()).flat().length
+    let data: {[key: string]: number};
+    if(diff >= 90){
+      data={
+        "100+": 50,
+        "80-99": 46,
+        "60-79": 32,
+        "40-59": 10,
+        "20-39": 0,
+        "<20": 0
+      }
+    }else if(diff >= 80){
+      data={
+        "100+": 40,
+        "80-99": 56,
+        "60-79": 42,
+        "40-59": 15,
+        "20-39": 0,
+        "<20": 0
+      }
+    }else if(diff >= 70){
+      data={
+        "100+": 33,
+        "80-99": 64,
+        "60-79": 42,
+        "40-59": 25,
+        "20-39": 2,
+        "<20": 0
+      }
+    }else if(diff >= 60){
+      data={
+        "100+": 10,
+        "80-99": 38,
+        "60-79": 50,
+        "40-59": 55,
+        "20-39": 4,
+        "<20": 0
+      }
+    }else if(diff >= 50){
+      data={
+        "100+": 5,
+        "80-99": 25,
+        "60-79": 42,
+        "40-59": 43,
+        "20-39": 7,
+        "<20": 0
+      }
+    }else if(diff >= 40){
+      data={
+        "100+": 2,
+        "80-99": 20,
+        "60-79": 27,
+        "40-59": 38,
+        "20-39": 12,
+        "<20": 0
+      }
+    }else if(diff >= 30){
+      data={
+        "100+": 1,
+        "80-99": 12,
+        "60-79": 19,
+        "40-59": 36,
+        "20-39": 39,
+        "<20": 2
+      }
+    }else if(diff >= 20){
+      data={
+        "100+": 2,
+        "80-99": 13,
+        "60-79": 19,
+        "40-59": 33,
+        "20-39": 47,
+        "<20": 4
+      }
+    }else{
+      data={
+        "100+": 2,
+        "80-99": 4,
+        "60-79": 7,
+        "40-59": 29,
+        "20-39": 39,
+        "<20": 30
+      }
+    }
+    if(guesses.length > 100){
+      data["100+"] += 1;
+    }else if(guesses.length > 79){
+      data["80-99"] += 1;
+    }else if(guesses.length > 59){
+      data["60-79"] += 1;
+    }else if(guesses.length > 39){
+      data["40-59"] += 1;
+    }else if(guesses.length > 19){
+      data["20-39"] += 1;
+    }else{
+      data["<20"] += 1;
+    }
+
+    return data
+  }
 
   return (
     <div className="Game" style={{ display: props.hidden ? "none" : "block" }}>
       <div id="chartHolder" style={{ display: won ? "block" : "none" }}>
-        <Chart
+        {won && <Chart
           color={"#67b6c7"}
-          data={{
-            "100+": 2,
-            "80-99": 13,
-            "60-79": 13,
-            "40-59": 14,
-            "20-39": 18,
-            "<20": 4
-          }}
+          data={getData()}
           your={guesses.length + 1}
           padding={10}
           gridColor={"#a55ca5"}
           gridScale={5}
           won={won}
-        /><div className="wonHint">
+        />}
+        <div className="wonHint">
           {hint || `\u00a0`}
         </div>
         {gameState !== GameState.Playing && (

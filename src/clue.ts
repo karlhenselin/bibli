@@ -99,7 +99,7 @@ function checkAdditionalLetters(word: string, guesses: string, cluedLetters: Clu
         } else {
           cluedLetters[i].clue = decrimentClue(cluedLetters[i].clue);
         }
-        cluedLetters[i].letter = letters[i];
+        //cluedLetters[i].letter = letters[i];
       }
     }
     checkAdditionalLetters(word, guesses.slice(0, -1), cluedLetters);
@@ -119,24 +119,27 @@ function isFadedOrPunctuation(value: ICluedLetter, index: number, self: ICluedLe
 
 
 export function isPunctuation(l: string): boolean {
-  return /[,.:;?1234567890!@#$%^&*()-=_+]/.test(l);
+  return /[1234567890!@#$%^&*()-=_+„]/.test(l) || /\p{Punctuation}/u.test(l);
 }
 
+function accentFold(inStr: string) {
+  return inStr.normalize("NFD").replace(/\p{Diacritic}/gu, "")
+}
 
 export function clue(guesses: string, wordsMap: Map<number, CluedLetter[]>): Map<number, CluedLetter[]> {
   wordsMap.forEach((cluedLetters: CluedLetter[], word: number) => {
     //check for whole words first.
-    if (wordInAllGuesses(lettersNoPunctuationOf(cluedLetters).toUpperCase(), guesses.split('').filter(onlyUnique).join('').slice(-1 * Math.max(12, guesses.length)).toUpperCase())) {
+    if (wordInAllGuesses(accentFold(lettersNoPunctuationOf(cluedLetters)).toUpperCase(), guesses.split('').filter(onlyUnique).join('').slice(-1 * Math.max(12, guesses.length)).toUpperCase())) {
       for (var i = 0; i < cluedLetters.length; i++) {
         if (cluedLetters[i].clue !== Clue.Punctuation) {
           cluedLetters[i].clue = Clue.Correct;
-          cluedLetters[i].letter = lettersOf(cluedLetters).substring(i, i + 1);
+          //cluedLetters[i].letter = lettersOf(cluedLetters).substring(i, i + 1);
         }
       }
     }
 
     //check for individual letters next.
-    checkAdditionalLetters(lettersNoPunctuationOf(cluedLetters).toUpperCase(), guesses.toUpperCase(), cluedLetters);
+    checkAdditionalLetters(accentFold(lettersNoPunctuationOf(cluedLetters)).toUpperCase(), guesses.toUpperCase(), cluedLetters);
 
   })
 
@@ -148,7 +151,7 @@ export function guessesNotInTarget(guesses: string, target: Map<number, CluedLet
 {
   let absent: CluedLetter[] = [];
   const uniqueGuesses = guesses.toUpperCase().split('').filter(onlyUnique);
-  const usedLetters: string = Array.from(target.values()).flat().filter((x) => x.clue !== Clue.Correct).map((x) => x.letter.toUpperCase()).filter(onlyUnique).join('');
+  const usedLetters: string = Array.from(target.values()).flat().filter((x) => x.clue !== Clue.Correct).map((x) => accentFold(x.letter).toUpperCase()).filter(onlyUnique).join('');
   for (var guess of uniqueGuesses) {
     if (usedLetters.indexOf(guess) === -1) {
       absent.push(new CluedLetter(guess, Clue.Absent));
