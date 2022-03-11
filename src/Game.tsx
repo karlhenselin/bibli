@@ -72,15 +72,14 @@ function Game(props: GameProps) {
   };
 
   useEffect(() => {
+    function performRefresh() {
+      setTarget(props.target);
+      setReference(props.reference);
+      setTranslation(props.translation);
+      startNextGame();
+    }
     performRefresh(); //children function of interest
-  }, [props.refresh]);
-
-  function performRefresh() {
-    setTarget(props.target);
-    setReference(props.reference);
-    setTranslation(props.translation);
-    startNextGame();
-  }
+  }, [props.refresh, props.reference, props.target, props.translation]);
 
   async function shareWon(copiedHint: string, text?: string) {
     const canvas = getCanvas();
@@ -152,7 +151,7 @@ function Game(props: GameProps) {
 
 
 
-  }, [letterInfo, gameState, guesses, target, won]);
+  }, [letterInfo, gameState, guesses, target, reference, translation]);
 
   const onKeyDown = useCallback((e: KeyboardEvent) => {
     if (!e.ctrlKey && !e.metaKey) {
@@ -171,11 +170,11 @@ function Game(props: GameProps) {
     };
   }, [currentGuess, gameState, onKeyDown, guesses]);
 
-  function getData():{[key: string]: number}{
+  function getData(): { [key: string]: number } {
     const diff = Array.from(target.values()).flat().length
-    let data: {[key: string]: number};
-    if(diff >= 90){
-      data={
+    let data: { [key: string]: number };
+    if (diff >= 90) {
+      data = {
         "100+": 50,
         "80-99": 46,
         "60-79": 32,
@@ -183,8 +182,8 @@ function Game(props: GameProps) {
         "20-39": 0,
         "<20": 0
       }
-    }else if(diff >= 80){
-      data={
+    } else if (diff >= 80) {
+      data = {
         "100+": 40,
         "80-99": 56,
         "60-79": 42,
@@ -192,8 +191,8 @@ function Game(props: GameProps) {
         "20-39": 0,
         "<20": 0
       }
-    }else if(diff >= 70){
-      data={
+    } else if (diff >= 70) {
+      data = {
         "100+": 33,
         "80-99": 64,
         "60-79": 42,
@@ -201,8 +200,8 @@ function Game(props: GameProps) {
         "20-39": 2,
         "<20": 0
       }
-    }else if(diff >= 60){
-      data={
+    } else if (diff >= 60) {
+      data = {
         "100+": 10,
         "80-99": 38,
         "60-79": 50,
@@ -210,8 +209,8 @@ function Game(props: GameProps) {
         "20-39": 4,
         "<20": 0
       }
-    }else if(diff >= 50){
-      data={
+    } else if (diff >= 50) {
+      data = {
         "100+": 5,
         "80-99": 25,
         "60-79": 42,
@@ -219,8 +218,8 @@ function Game(props: GameProps) {
         "20-39": 7,
         "<20": 0
       }
-    }else if(diff >= 40){
-      data={
+    } else if (diff >= 40) {
+      data = {
         "100+": 2,
         "80-99": 20,
         "60-79": 27,
@@ -228,8 +227,8 @@ function Game(props: GameProps) {
         "20-39": 12,
         "<20": 0
       }
-    }else if(diff >= 30){
-      data={
+    } else if (diff >= 30) {
+      data = {
         "100+": 1,
         "80-99": 12,
         "60-79": 19,
@@ -237,8 +236,8 @@ function Game(props: GameProps) {
         "20-39": 39,
         "<20": 2
       }
-    }else if(diff >= 20){
-      data={
+    } else if (diff >= 20) {
+      data = {
         "100+": 2,
         "80-99": 13,
         "60-79": 19,
@@ -246,8 +245,8 @@ function Game(props: GameProps) {
         "20-39": 47,
         "<20": 4
       }
-    }else{
-      data={
+    } else {
+      data = {
         "100+": 2,
         "80-99": 4,
         "60-79": 7,
@@ -256,17 +255,17 @@ function Game(props: GameProps) {
         "<20": 30
       }
     }
-    if(guesses.length > 100){
+    if (guesses.length > 100) {
       data["100+"] += 1;
-    }else if(guesses.length > 79){
+    } else if (guesses.length > 79) {
       data["80-99"] += 1;
-    }else if(guesses.length > 59){
+    } else if (guesses.length > 59) {
       data["60-79"] += 1;
-    }else if(guesses.length > 39){
+    } else if (guesses.length > 39) {
       data["40-59"] += 1;
-    }else if(guesses.length > 19){
+    } else if (guesses.length > 19) {
       data["20-39"] += 1;
-    }else{
+    } else {
       data["<20"] += 1;
     }
 

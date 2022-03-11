@@ -75,14 +75,14 @@ function App() {
   const [target, setTarget] = useState<Map<number, CluedLetter[]>>(new Map());
 
   const [enterLeft, setEnterLeft] = useSetting<boolean>("enter-left", false);
-  if (target.size == 0) {
+  if (target.size === 0) {
     pickTodaysTarget(translation);
   }
   function pickTodaysTarget(translation: string) {
     candidate = bookify(pick(targets), Language.English);
     //candidate = '1 Samuel 2: 3';
     let url: string;
-    if (translation != "") {
+    if (translation !== "") {
       url = "http://localhost:3000/api/passage/?search=" + encodeURIComponent(candidate) + "&version=" + encodeURIComponent(translation.substring(0, translation.indexOf("-")));
     } else {
       url = "http://localhost:3000/api/passage/?search=" + encodeURIComponent(candidate);
@@ -91,8 +91,6 @@ function App() {
     $.ajax({
       url: url,
       context: document.body,
-      async: false
-
     }).done(function (data: any) {
       var thetext = $(data).find(".result-text-style-normal");
       thetext.find('h3').remove();
@@ -226,7 +224,7 @@ function App() {
           </div>
         </div>
       )}
-      {target.size > 0 && 
+      {(target.size > 0 && 
         <Game
           hidden={page !== "game"}
           refresh={refresh}
@@ -239,7 +237,7 @@ function App() {
           target={target}
           reference={candidate}
           translation={translation}
-        />}
+        />) || "<h2>Loading</h2"}
     </div>
   );
 }
