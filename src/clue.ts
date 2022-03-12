@@ -29,10 +29,6 @@ export interface ICluedLetter {
   isFaded(): boolean;
 }
 
-function lettersOf(cluedLetters: CluedLetter[]): string {
-  return cluedLetters.map((x) => x.letter).join('');
-}
-
 function lettersNoPunctuationOf(cluedLetters: CluedLetter[]): string {
   return cluedLetters.map((x) => x.letter).filter((x) => !isPunctuation(x)).join('');
 }

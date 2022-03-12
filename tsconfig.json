@@ -1,7 +1,9 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "downlevelIteration": true,
+    "target": "es6",
+    "types": [
+      "webpack-env"
+    ],
     "lib": [
       "dom",
       "dom.iterable",

@@ -8,7 +8,6 @@ import { Language, bookify } from "./books";
 import targetList from "./targets.json";
 import { CluedLetter, isPunctuation, Clue } from "./clue";
 
-var $ = require("jquery");
 const targets = targetList;
 let candidate: string;
 
@@ -83,34 +82,35 @@ function App() {
     //candidate = '1 Samuel 2: 3';
     let url: string;
     if (translation !== "") {
-      url = "http://localhost:3000/api/passage/?search=" + encodeURIComponent(candidate) + "&version=" + encodeURIComponent(translation.substring(0, translation.indexOf("-")));
+      url = "https://petraguardsoftware.com/bibles.php?search=" + encodeURIComponent(candidate) + "&version=" + encodeURIComponent(translation.substring(0, translation.indexOf("-")));
     } else {
-      url = "http://localhost:3000/api/passage/?search=" + encodeURIComponent(candidate);
+      url = "https://petraguardsoftware.com/bibles.php?search=" + encodeURIComponent(candidate);
     }
 
-    $.ajax({
-      url: url,
-      context: document.body,
-    }).done(function (data: any) {
-      var thetext = $(data).find(".result-text-style-normal");
-      thetext.find('h3').remove();
-      thetext.find('a').remove();
-      thetext.find('.versenum').remove();//kill the verse numbers.
-      thetext.find('.chapternum').remove();//kill all #'s (verse numbers)
-      thetext.find('.footnotes').remove();//kill the actual footnotes.
-      thetext.find('.footnote').remove();//kill the actual footnotes.
-      thetext.find('.crossreference').remove();//kill the actual footnotes.
-      thetext.find('.crossrefs').remove();//get rid of crossreferences
-      thetext.find('br').replaceWith(' ');//replace <br/> with a space so that we don't get words stuck together.
+    function tryReplaceSpace(x: HTMLCollectionOf<Element>) {
+      if (x) {
+        for (let y of x) {
+          y.replaceWith(" ");
+        }
+      }
+    }
 
-      const text: string = thetext.text().replace(/\s{2,}/g, ' ')//get rid of all enters and doubled spaces
-        .replace(/^\s+|\s+$/g, "")//trim
-        .replace(/[\u2018\u2019]/g, "'")
-        .replace(/[\u201C\u201D]/g, '');
-        
-      setTarget(wordsMapFromText(text));
-
-    }).catch((err: string) => { throw (err) });
+    fetch(url, {
+      method: 'get'
+    }).then(response => response.text())
+      .then(data => {
+        const div = document.createElement("div");
+        div.innerHTML = data;
+        tryReplaceSpace(div.getElementsByTagName('br'));
+        const text: string = div.innerText.replace(/\s{2,}/g, ' ')//get rid of all enters and doubled spaces
+          .replace(/^\s+|\s+$/g, "")//trim
+          .replace(/[\u2018\u2019]/g, "'")
+          .replace(/[\u201C\u201D]/g, '');
+        setTarget(wordsMapFromText(text));
+      })
+      .catch(err => {
+        console.error(err);
+      });
   }
 
   useEffect(() => {
@@ -193,10 +193,9 @@ function App() {
               <option value="HCSB-English">Holman Christian Standard Bible (HCSB, English)</option>
               <option value="NIV-English">New International Version (NIV, English)</option>
               <option value="LBLA-Spanish">La Biblia de las Américas (LBLA, Español)</option>
-              <option value="PDT-Spanish">Palabra de Dios para Todos (PDT, Español)</option>
               <option value="LUTH1545-German">Luther Bible 1545 (LUTH, Deutsch)</option>
-              
-              
+
+
             </select>
           </div>
           <div className="Settings-setting">
@@ -224,7 +223,7 @@ function App() {
           </div>
         </div>
       )}
-      {(target.size > 0 && 
+      {(target.size > 0 &&
         <Game
           hidden={page !== "game"}
           refresh={refresh}

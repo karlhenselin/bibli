@@ -55,36 +55,56 @@ function Game(props: GameProps) {
   const [gameState, setGameState] = useState<GameState>(GameState.Playing);
   const [guesses, setGuesses] = useState<string[]>([]);
   const [currentGuess, setCurrentGuess] = useState<string>("");
-  const [target, setTarget] = useState<Map<number, CluedLetter[]>>(() => { return props.target });
+  const [target, setTarget] = useState<Map<number, CluedLetter[]>>(() => { return new Map(props.target) });
   const [reference, setReference] = useState<string>(() => { return props.reference });
   const [translation, setTranslation] = useState<string>(() => { return props.translation });
   const [letterInfo, setLetterInfo] = useState<Map<string, Clue>>(() => new Map<string, Clue>());
   const [hint, setHint] = useState<string>('Make your first guess!');
   const tableRef = useRef<HTMLTableElement>(null);
-  const [won, setWon] = useState<boolean>(false);
-  const startNextGame = () => {
-    setHint("");
-    setGuesses([]);
-    setCurrentGuess("");
-    setGameState(GameState.Playing);
-    setWon(false);
-    setLetterInfo(new Map<string, Clue>());
-  };
+  const [restart, setRestart] = useState<number>(1);
 
   useEffect(() => {
-    function performRefresh() {
-      setTarget(props.target);
-      setReference(props.reference);
-      setTranslation(props.translation);
-      startNextGame();
-    }
-    performRefresh(); //children function of interest
-  }, [props.refresh, props.reference, props.target, props.translation]);
+    setHint('Make your first guess!');
+    setGuesses([]);
+    setCurrentGuess("");
+    setLetterInfo(new Map<string, Clue>());
+    setGameState(GameState.Playing);
+    props.target.forEach((cluedLetters: CluedLetter[], word: number) => {
+      cluedLetters.filter((x) => x.clue !== Clue.Punctuation).forEach((x) => x.clue = undefined);
+    });
+    setTarget(new Map(props.target));
+    setReference(props.reference);
+    setTranslation(props.translation);
+
+  }, [props.refresh, props.reference, props.target, props.translation, restart]);
 
   async function shareWon(copiedHint: string, text?: string) {
     const canvas = getCanvas();
 
     canvas.toBlob(async function (blob) {
+      if (
+        /android|iphone|ipad|ipod|webos/i.test(navigator.userAgent) &&
+        !/firefox/i.test(navigator.userAgent)
+      ) {
+        try {
+          const filesArray = [
+            new File(
+              [blob!],
+              'bibliResult.png',
+              {
+                type: "image/png",
+                lastModified: new Date().getTime()
+              }
+            )];
+          const shareData = {
+            files: filesArray,
+          };
+          await navigator.share(shareData);
+          return;
+        } catch (e) {
+          console.warn("navigator.share failed:", e);
+        }
+      }
       try {
         const item = new ClipboardItem({ "image/png": blob! });
         await navigator.clipboard.write([item]);
@@ -120,12 +140,6 @@ function Game(props: GameProps) {
   }
 
   const onKey = useCallback((key: string) => {
-    if (gameState !== GameState.Playing) {
-      if (key === "Enter") {
-        startNextGame();
-      }
-      return;
-    }
     if (/^[a-z]$/i.test(key)) {
       setCurrentGuess(key.toLowerCase());
       tableRef.current?.focus();
@@ -143,15 +157,16 @@ function Game(props: GameProps) {
         setLetterInfo(new Map([...letterInfo, ...newLetters]));
       }
       if (allDone(t)) {
-        setWon(true);
-        setHint("You solved " + reference + " (" + translation.substring(0, translation.indexOf("-")) + ") in " + (guesses.length + 1) + " guesses.");
+        setHint("");
         setGameState(GameState.Won);
       }
     }
 
+  }, [letterInfo, guesses, target]);
 
-
-  }, [letterInfo, gameState, guesses, target, reference, translation]);
+  function wonMessage(): string {
+    return reference + " (" + translation.substring(0, translation.indexOf("-")) + ") in " + (guesses.length + 1) + " guesses."
+  }
 
   const onKeyDown = useCallback((e: KeyboardEvent) => {
     if (!e.ctrlKey && !e.metaKey) {
@@ -274,31 +289,40 @@ function Game(props: GameProps) {
 
   return (
     <div className="Game" style={{ display: props.hidden ? "none" : "block" }}>
-      <div id="chartHolder" style={{ display: won ? "block" : "none" }}>
-        {won && <Chart
+      <div id="chartHolder" style={{ display: gameState === GameState.Won ? "block" : "none" }}>
+        {<Chart
           color={"#67b6c7"}
           data={getData()}
           your={guesses.length + 1}
           padding={10}
           gridColor={"#a55ca5"}
           gridScale={5}
-          won={won}
+          won={gameState === GameState.Won}
+          message={wonMessage()}
         />}
         <div className="wonHint">
           {hint || `\u00a0`}
         </div>
         {gameState !== GameState.Playing && (
-
-          <button
-            onClick={() => {
-              shareWon(
-                "Result copied to clipboard!",
-                `${gameName} ${guesses.length}\n`
-              );
-            }}
-          >
-            Share results
-          </button>
+          <div className="buttons">
+            <button
+              onClick={() => {
+                shareWon(
+                  "Result copied to clipboard!",
+                  `${gameName} ${guesses.length}\n`
+                );
+              }}
+            >
+              Share results
+            </button>
+            <button
+              onClick={() => {
+                setRestart(prev => prev + 1);
+              }}
+            >
+              Try Again
+            </button>{" "}
+          </div>
         )}
       </div>
       <div
