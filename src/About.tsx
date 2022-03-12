@@ -15,7 +15,7 @@ export function About() {
 
       <p>
         Report issues{" "}
-        <a href="https://github.com/karlhenselin/bubli/issues">here</a>.
+        <a href="https://github.com/karlhenselin/bibli/issues">here</a>.
       </p>
       <p>
         This game will be free and ad-free forever.

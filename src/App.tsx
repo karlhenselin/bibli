@@ -69,7 +69,7 @@ function App() {
   );
   const [translation, setTranslation] = useSetting<string>(
     "translation",
-    "HCSB-English"
+    "NIV-English"
   );
   const [target, setTarget] = useState<Map<number, CluedLetter[]>>(new Map());
 
@@ -236,7 +236,7 @@ function App() {
           target={target}
           reference={candidate}
           translation={translation}
-        />) || "<h2>Loading</h2"}
+        />) || "Loading..."}
     </div>
   );
 }
