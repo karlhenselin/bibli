@@ -1,25 +1,14 @@
 export const gameName = "BIBLI";
 
-function mulberry32(a: number) {
-  return function () {
-    var t = (a += 0x6d2b79f5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
 const now = new Date();
 const seed = Number(
   now.toLocaleDateString("en-US", { year: "numeric" }) +
   now.toLocaleDateString("en-US", { month: "2-digit" }) +
   now.toLocaleDateString("en-US", { day: "2-digit" }));
 
-const makeRandom = () => (seed ? mulberry32(seed) : () => Math.random());
 
 export function pick<T>(array: Array<T>): T {
-  let random = makeRandom();
-  return array[Math.floor(array.length * random())];
+  return array[Math.floor((new Date().getTime() - new Date("March 9, 2022").getTime()) / (1000 * 3600 * 24)) % array.length];
 }
 
 // https://a11y-guidelines.orange.com/en/web/components-examples/make-a-screen-reader-talk/
