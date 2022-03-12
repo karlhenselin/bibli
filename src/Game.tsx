@@ -98,6 +98,8 @@ function Game(props: GameProps) {
             )];
           const shareData = {
             files: filesArray,
+            text: wonMessage(),
+            url: "https://bibli.petraguardsoftware.com"
           };
           await navigator.share(shareData);
           return;

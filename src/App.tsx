@@ -105,6 +105,7 @@ function App() {
         const text: string = div.innerText.replace(/\s{2,}/g, ' ')//get rid of all enters and doubled spaces
           .replace(/^\s+|\s+$/g, "")//trim
           .replace(/[\u2018\u2019]/g, "'")
+          .replace(/ß/g, "ss")
           .replace(/[\u201C\u201D]/g, '');
         setTarget(wordsMapFromText(text));
       })
@@ -131,7 +132,7 @@ function App() {
       {emoji}
     </button>
   );
-
+  let language = languageOf(translation.substring(translation.indexOf("-") + 1));
   return (
     <div className={"App-container" + (colorBlind ? " color-blind" : "")}>
       <h1>
@@ -223,6 +224,7 @@ function App() {
           </div>
         </div>
       )}
+
       {(target.size > 0 &&
         <Game
           hidden={page !== "game"}
@@ -232,9 +234,9 @@ function App() {
             /[BE]/g,
             (x) => (enterLeft ? "EB" : "BE")["BE".indexOf(x)]
           )}
-          language={languageOf(translation.substring(translation.indexOf("-")))}
+          language={language}
           target={target}
-          reference={candidate}
+          reference={bookify(pick(targets), language)}
           translation={translation}
         />) || "Loading..."}
     </div>

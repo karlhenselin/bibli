@@ -125,7 +125,7 @@ function accentFold(inStr: string) {
 export function clue(guesses: string, wordsMap: Map<number, CluedLetter[]>): Map<number, CluedLetter[]> {
   wordsMap.forEach((cluedLetters: CluedLetter[], word: number) => {
     //check for whole words first.
-    if (wordInAllGuesses(accentFold(lettersNoPunctuationOf(cluedLetters)).toUpperCase(), guesses.split('').filter(onlyUnique).join('').slice(-1 * Math.max(12, guesses.length)).toUpperCase())) {
+    if (wordInAllGuesses(accentFold(lettersNoPunctuationOf(cluedLetters)).toUpperCase(), guesses.slice(-1 * Math.max(12, guesses.length)).toUpperCase())) {
       for (var i = 0; i < cluedLetters.length; i++) {
         if (cluedLetters[i].clue !== Clue.Punctuation) {
           cluedLetters[i].clue = Clue.Correct;
