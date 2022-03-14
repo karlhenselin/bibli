@@ -1,12 +1,5 @@
 export const gameName = "BIBLI";
 
-const now = new Date();
-const seed = Number(
-  now.toLocaleDateString("en-US", { year: "numeric" }) +
-  now.toLocaleDateString("en-US", { month: "2-digit" }) +
-  now.toLocaleDateString("en-US", { day: "2-digit" }));
-
-
 export function pick<T>(array: Array<T>): T {
   return array[Math.floor((new Date().getTime() - new Date("March 9, 2022").getTime()) / (1000 * 3600 * 24)) % array.length];
 }

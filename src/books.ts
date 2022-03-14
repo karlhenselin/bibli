@@ -1,5 +1,3 @@
-import { idText } from "typescript";
-
 export enum Language {
     English,
     Spanish,
