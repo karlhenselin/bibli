@@ -142,7 +142,11 @@ function Game(props: GameProps) {
   }
 
   const onKey = useCallback((key: string) => {
-    if (/^[a-z]$/i.test(key)) {
+    if (gameState === GameState.Won) {
+      if (key === 'Escape') {
+        setRestart(restart + 1);
+      }
+    } else if (/^[a-z]$/i.test(key)) {
       setCurrentGuess(key.toLowerCase());
       tableRef.current?.focus();
       setHint("");
@@ -164,7 +168,7 @@ function Game(props: GameProps) {
       }
     }
 
-  }, [letterInfo, guesses, target]);
+  }, [letterInfo, guesses, target, restart, gameState]);
 
   function wonMessage(): string {
     return reference + " (" + translation.substring(0, translation.indexOf("-")) + ") in " + (guesses.length + 1) + " guesses."
@@ -291,7 +295,8 @@ function Game(props: GameProps) {
 
   return (
     <div className="Game" style={{ display: props.hidden ? "none" : "block" }}>
-      <div id="chartHolder" style={{ display: gameState === GameState.Won ? "block" : "none" }}>
+      <div id="chartHolder" style={{ display: gameState === GameState.Won ? "block" : "none" }}><div id="chartHolderInner">
+        <button id="x" onClick={() => setRestart(restart + 1)}>X</button>
         {<Chart
           color={"#67b6c7"}
           data={getData()}
@@ -326,7 +331,7 @@ function Game(props: GameProps) {
             </button>{" "}
           </div>
         )}
-      </div>
+      </div></div>
       <div
         className="Game-rows"
         tabIndex={0}
