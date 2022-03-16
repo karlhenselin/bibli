@@ -69,7 +69,7 @@ function wordInGuesses(word: string, guesses: string): boolean {
 
   let tempWord = word.replaceAll(guesses.slice(-1), "");
   if (tempWord.length < wordLength) {
-    return wordInGuesses(tempWord, guesses.substring(0, guesses.length - 1));
+    return wordInGuesses(tempWord, guesses.replaceAll(guesses.slice(-1), ""));
   }
   return false;//No letters were removed, so this word didn't work out this time. It might from other guesses, of some letters might also.
 }
@@ -98,7 +98,7 @@ function checkAdditionalLetters(word: string, guesses: string, cluedLetters: Clu
         //cluedLetters[i].letter = letters[i];
       }
     }
-    checkAdditionalLetters(word, guesses.slice(0, -1), cluedLetters);
+    checkAdditionalLetters(word, guesses.replaceAll(guesses.slice(-1), ""), cluedLetters);
   };
   return;
 }
@@ -125,7 +125,8 @@ function accentFold(inStr: string) {
 export function clue(guesses: string, wordsMap: Map<number, CluedLetter[]>): Map<number, CluedLetter[]> {
   wordsMap.forEach((cluedLetters: CluedLetter[], word: number) => {
     //check for whole words first.
-    if (wordInAllGuesses(accentFold(lettersNoPunctuationOf(cluedLetters)).toUpperCase(), guesses.slice(-1 * Math.max(12, guesses.length)).toUpperCase())) {
+
+    if (wordInAllGuesses(accentFold(lettersNoPunctuationOf(cluedLetters)).toUpperCase(), guesses.toUpperCase())) {
       for (var i = 0; i < cluedLetters.length; i++) {
         if (cluedLetters[i].clue !== Clue.Punctuation) {
           cluedLetters[i].clue = Clue.Correct;

@@ -102,12 +102,16 @@ function App() {
         const div = document.createElement("div");
         div.innerHTML = data;
         tryReplaceSpace(div.getElementsByTagName('br'));
-        const text: string = div.innerText.replace(/\s{2,}/g, ' ')//get rid of all enters and doubled spaces
-          .replace(/^\s+|\s+$/g, "")//trim
+        const text: string = div.innerText
           .replace(/[\u2018\u2019]/g, "'")
           .replace(/ß/g, "ss")
-          .replace(/[\u201C\u201D]/g, '');
+          .replace(/—/g, ' — ')//words were hyphened together, and the code didn't like that.
+          .replace(/[\u201C\u201D]/g, '')
+          .replace(/\s{2,}/g, ' ')//get rid of all enters and doubled spaces   
+          .replace(/^[\s—-]+|[\s—-]+$/g, "")//trim;
+
         setTarget(wordsMapFromText(text));
+
       })
       .catch(err => {
         console.error(err);
