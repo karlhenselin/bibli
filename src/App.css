@@ -27,6 +27,8 @@ body {
   font-weight: bold;
   transition: all .3s ease-out;
 }
+
+
 .Row-letter.letter-space {
   max-width: 30px;
   width: 3px;
@@ -365,4 +367,22 @@ a:active {
 
 #myCanvas{
   border-radius: 15px;
+}
+
+@media only screen and (max-width: 450px) {
+  .Row-letter {
+    max-width: 25px;
+    min-width: 25px;
+    height: 26px;
+    font-size: 20px;
+  }
+  .Game-keyboard-button{
+    min-height: 37px;
+  }
+  p{
+    margin:0.25em;
+  }
+  h1{
+    margin-bottom: 0.25em
+  }
 }
