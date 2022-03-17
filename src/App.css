@@ -183,32 +183,32 @@ table.Game-rows > tbody {
 
 .letter-fade0 {
   border: 2px solid rgba(0, 0, 0, 0.3);
-  background-color: rgba(87, 172, 120, 0.9);
-  color: rgba(255,255,255,0.9) !important;
+  background-color: #1b6f2c;
+  color: rgba(255,255,255,0.99) !important;
 }
 
 .letter-fade1 {
   border: 2px solid rgba(0, 0, 0, 0.3);
-  background-color: rgba(87, 172, 120, 0.8);
-  color: rgba(255,255,255,0.8) !important;
+  background-color:#32b411;
+  color: rgba(255,255,255,0.98) !important;
 }
 
 .letter-fade2 {
   border: 2px solid rgba(0, 0, 0, 0.3);
-  background-color: rgba(87, 172, 120, 0.7);
-  color: rgba(255,255,255,0.7) !important;
+  background-color: #77b61d;
+  color: rgba(255,255,255,0.95) !important;
 }
 
 .letter-fade3 {
   border: 2px solid rgba(0, 0, 0, 0.3);
-  background-color: rgba(87, 172, 120, 0.6);
-  color: rgba(255,255,255,0.6) !important;
+  background-color: #c6a736;
+  color: rgba(255,255,255,0.93) !important;
 }
 
 .letter-fade4 {
   border: 2px solid rgba(0, 0, 0, 0.3);
-  background-color: rgba(87, 172, 120, 0.5);
-  color: rgba(255,255,255,0.5) !important;
+  background-color: #F00;
+  color: rgba(255,255,255,0.89) !important;
 }
 
 body.dark {
