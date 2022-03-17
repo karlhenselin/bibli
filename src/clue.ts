@@ -9,7 +9,7 @@ export enum Clue {
   Fade0,
   Correct
 }
-export function decrimentClue(clue: Clue | undefined): Clue | undefined {
+function decrimentClue(clue: Clue | undefined): Clue | undefined {
   if (clue === Clue.Fade0) {
     clue = Clue.Fade1;
   } else if (clue === Clue.Fade1) {
@@ -42,19 +42,6 @@ export class CluedLetter implements ICluedLetter {
 
 }
 
-function wordInAllGuesses(word: string, guesses: string): boolean {
-  if (guesses.length === 0) {
-    return false;
-  }
-  if (word.length === 0) {
-    return true;
-  }
-  if (wordInGuesses(word, guesses)) {
-    return true;
-  }
-  return wordInAllGuesses(word, guesses.substring(0, guesses.length - 1));
-
-}
 
 function wordInGuesses(word: string, guesses: string): boolean {
   let wordLength = word.length;
@@ -73,36 +60,6 @@ function wordInGuesses(word: string, guesses: string): boolean {
   }
   return false;//No letters were removed, so this word didn't work out this time. It might from other guesses, of some letters might also.
 }
-
-function checkAdditionalLetters(word: string, guesses: string, cluedLetters: CluedLetter[]) {
-  let wordLength = word.length;
-
-  if (wordLength === 0) {
-    return true;
-  }
-
-  if (guesses.length === 0) {
-    return false;
-  }
-
-  let tempWord = word.replaceAll(guesses.slice(-1), "");
-  if (tempWord.length < wordLength) {
-    let letters: string[] = word.split("");
-    for (let i in letters) {
-      if (letters[i] === guesses.slice(-1)) {
-        if (cluedLetters[i].clue === undefined || cluedLetters[i].isFaded()) {
-          cluedLetters[i].clue = Clue.Fade0;
-        } else {
-          cluedLetters[i].clue = decrimentClue(cluedLetters[i].clue);
-        }
-        //cluedLetters[i].letter = letters[i];
-      }
-    }
-    checkAdditionalLetters(word, guesses.replaceAll(guesses.slice(-1), ""), cluedLetters);
-  };
-  return;
-}
-
 
 export function onlyUnique(value: any, index: number, self: any[]) {
   return self.indexOf(value) === index;
@@ -124,19 +81,31 @@ function accentFold(inStr: string) {
 
 export function clue(guesses: string, wordsMap: Map<number, CluedLetter[]>): Map<number, CluedLetter[]> {
   wordsMap.forEach((cluedLetters: CluedLetter[], word: number) => {
-    //check for whole words first.
+    //fade old clues
 
-    if (wordInAllGuesses(accentFold(lettersNoPunctuationOf(cluedLetters)).toUpperCase(), guesses.toUpperCase())) {
-      for (var i = 0; i < cluedLetters.length; i++) {
-        if (cluedLetters[i].clue !== Clue.Punctuation) {
-          cluedLetters[i].clue = Clue.Correct;
-          //cluedLetters[i].letter = lettersOf(cluedLetters).substring(i, i + 1);
+    for (var i = 0; i < cluedLetters.length; i++) {
+      if (cluedLetters[i].clue !== Clue.Punctuation
+        && cluedLetters[i].clue !== Clue.Correct) {
+        cluedLetters[i].clue = decrimentClue(cluedLetters[i].clue)
+      }
+    }
+
+
+    //check for whole words.
+    if (wordInGuesses(accentFold(lettersNoPunctuationOf(cluedLetters)).toUpperCase(), guesses.toUpperCase())) {
+      for (var j = 0; j < cluedLetters.length; j++) {
+        if (cluedLetters[j].clue !== Clue.Punctuation) {
+          cluedLetters[j].clue = Clue.Correct;
         }
       }
     }
 
-    //check for individual letters next.
-    checkAdditionalLetters(accentFold(lettersNoPunctuationOf(cluedLetters)).toUpperCase(), guesses.toUpperCase(), cluedLetters);
+    //Mark last clue.
+    for (var k = 0; k < cluedLetters.length; k++) {
+      if (cluedLetters[k].clue !== Clue.Correct && accentFold(cluedLetters[k].letter).toUpperCase() === guesses.slice(-1).toUpperCase()) {
+        cluedLetters[k].clue = Clue.Fade0;
+      }
+    }
 
   })
 

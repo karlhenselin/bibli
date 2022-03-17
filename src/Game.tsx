@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Passage } from "./Passage";
-import { Clue, clue, guessesNotInTarget, CluedLetter, decrimentClue, clueFadedWords } from "./clue";
+import { Clue, clue, guessesNotInTarget, CluedLetter, clueFadedWords } from "./clue";
 import { Keyboard } from "./Keyboard";
 import { Language } from "./books";
 import { Chart, getCanvas } from "./chart";
@@ -37,12 +37,9 @@ function mergeClues(letterStates: Map<number, CluedLetter[]>, arg1: Map<number, 
       } else if (arg1.get(key)![i].clue === Clue.Correct) {
         value[i].clue = Clue.Correct;
       }
-      else
-        if (value[i].isFaded()) {
-          value[i].clue = decrimentClue(value[i].clue);
-        } else {
-          value[i].clue = arg1.get(key)![i].clue;
-        }
+      else {
+        value[i].clue = arg1.get(key)![i].clue;
+      }
     }
   });
 
