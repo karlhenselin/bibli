@@ -81,15 +81,14 @@ function accentFold(inStr: string) {
 
 export function clue(guesses: string, wordsMap: Map<number, CluedLetter[]>): Map<number, CluedLetter[]> {
   wordsMap.forEach((cluedLetters: CluedLetter[], word: number) => {
-    //fade old clues
 
-    for (var i = 0; i < cluedLetters.length; i++) {
-      if (cluedLetters[i].clue !== Clue.Punctuation
-        && cluedLetters[i].clue !== Clue.Correct) {
-        cluedLetters[i].clue = decrimentClue(cluedLetters[i].clue)
-      }
+    //Mark last guess.
+    markLastGuess(cluedLetters, guesses);
+
+    //mark correct if all letters are faded.
+    if (cluedLetters.length === cluedLetters.filter(isFadedOrPunctuation).length) {
+      cluedLetters.filter((x) => x.clue !== Clue.Punctuation).forEach((x: ICluedLetter) => x.clue = Clue.Correct);
     }
-
 
     //check for whole words.
     if (wordInGuesses(accentFold(lettersNoPunctuationOf(cluedLetters)).toUpperCase(), guesses.toUpperCase())) {
@@ -100,12 +99,16 @@ export function clue(guesses: string, wordsMap: Map<number, CluedLetter[]>): Map
       }
     }
 
-    //Mark last clue.
-    for (var k = 0; k < cluedLetters.length; k++) {
-      if (cluedLetters[k].clue !== Clue.Correct && accentFold(cluedLetters[k].letter).toUpperCase() === guesses.slice(-1).toUpperCase()) {
-        cluedLetters[k].clue = Clue.Fade0;
+    //fade old clues
+    for (var i = 0; i < cluedLetters.length; i++) {
+      if (cluedLetters[i].clue !== Clue.Punctuation
+        && cluedLetters[i].clue !== Clue.Correct) {
+        cluedLetters[i].clue = decrimentClue(cluedLetters[i].clue)
       }
     }
+
+    //reMark last clue.
+    markLastGuess(cluedLetters, guesses);
 
   })
 
@@ -148,24 +151,11 @@ export function clueClass(clue: Clue | undefined): string {
   return "letter-hidden";
 }
 
-export function clueWord(clue: Clue): string {
-  if (clue === Clue.Absent) {
-    return "no";
-  } else {
-    return "correct";
+function markLastGuess(cluedLetters: CluedLetter[], guesses: string) {
+  for (var k = 0; k < cluedLetters.length; k++) {
+    if (cluedLetters[k].clue !== Clue.Correct && accentFold(cluedLetters[k].letter).toUpperCase() === guesses.slice(-1).toUpperCase()) {
+      cluedLetters[k].clue = Clue.Fade0;
+    }
   }
 }
 
-export function describeClue(clue: CluedLetter[]): string {
-  return clue
-    .map(({ letter, clue }) => letter.toUpperCase() + " " + clueWord(clue!))
-    .join(", ");
-}
-
-export function clueFadedWords(cluedLetters: Map<number, CluedLetter[]>) {
-  cluedLetters.forEach((word: CluedLetter[]) => {
-    if (word.length === word.filter(isFadedOrPunctuation).length) {
-      word.filter((x) => x.clue !== Clue.Punctuation).forEach((x: ICluedLetter) => x.clue = Clue.Correct);
-    }
-  });
-}

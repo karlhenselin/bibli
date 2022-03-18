@@ -105,7 +105,6 @@ function App() {
         const text: string = div.innerText
           .replace(/[\u2018\u2019]/g, "'")
           .replace(/ß/g, "ss")
-          .replace(/—/g, ' — ')//words were hyphened together, and the code didn't like that.
           .replace(/[\u201C\u201D]/g, '')
           .replace(/\s{2,}/g, ' ')//get rid of all enters and doubled spaces   
           .replace(/^[\s—-]+|[\s—-]+$/g, "")//trim;
@@ -199,6 +198,7 @@ function App() {
               <option value="NIV-English">New International Version (NIV, English)</option>
               <option value="LBLA-Spanish">La Biblia de las Américas (LBLA, Español)</option>
               <option value="LUTH1545-German">Luther Bible 1545 (LUTH, Deutsch)</option>
+              <option value="NEG1979-French">Nouvelle Edition de Genève 1979 (NEG, Français)</option>
 
 
             </select>
