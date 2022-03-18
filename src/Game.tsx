@@ -166,7 +166,7 @@ function Game(props: GameProps) {
   }, [letterInfo, guesses, target, restart, gameState]);
 
   function wonMessage(): string {
-    return reference + " (" + translation.substring(0, translation.indexOf("-")) + ") in " + (guesses.length + 1) + " guesses."
+    return reference + " (" + translation.substring(0, translation.indexOf("-")) + ") in " + (guesses.length) + " guesses."
   }
 
   const onKeyDown = useCallback((e: KeyboardEvent) => {
@@ -295,7 +295,7 @@ function Game(props: GameProps) {
         {<Chart
           color={"#67b6c7"}
           data={getData()}
-          your={guesses.length + 1}
+          your={guesses.length}
           padding={10}
           gridColor={"#a55ca5"}
           gridScale={5}
