@@ -165,7 +165,7 @@ function xOfYour(your: number): number {
 export function Chart(props: ChartProps) {
 
     useEffect(() => {
-        if (props.won) {
+        if (props.won && props.data !== {}) {
             draw(
                 {
                     color: props.color,
@@ -175,6 +175,18 @@ export function Chart(props: ChartProps) {
                     gridScale: props.gridScale,
                     your: props.your,
                     message: props.message
+                }
+            );
+        } else {
+            draw(
+                {
+                    color: props.color,
+                    data: { "100+": 0, "80-99": 0, "60-79": 0, "40-59": 0, "20-39": 0, "<20": 0 },
+                    padding: props.padding,
+                    gridColor: props.gridColor,
+                    gridScale: props.gridScale,
+                    your: props.your,
+                    message: "Loading"
                 }
             );
         }

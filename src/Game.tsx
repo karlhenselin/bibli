@@ -57,6 +57,7 @@ function Game(props: GameProps) {
   const [hint, setHint] = useState<string>('Make your first guess!');
   const tableRef = useRef<HTMLTableElement>(null);
   const [restart, setRestart] = useState<number>(1);
+  const [stats, setStats] = useState<{ [key: string]: number }>({});
 
   useEffect(() => {
     setHint('Make your first guess!');
@@ -70,7 +71,7 @@ function Game(props: GameProps) {
     setTarget(new Map(props.target));
     setReference(props.reference);
     setTranslation(props.translation);
-
+    setStats({});
   }, [props.refresh, props.reference, props.target, props.translation, restart]);
 
   async function shareWon(copiedHint: string, text?: string) {
@@ -160,33 +161,13 @@ function Game(props: GameProps) {
       if (allDone(t)) {
         setHint("");
         setGameState(GameState.Won);
+        getStatsData(guesses.length);
       }
     }
 
   }, [letterInfo, guesses, target, restart, gameState]);
 
-  function wonMessage(): string {
-    return reference + " (" + translation.substring(0, translation.indexOf("-")) + ") in " + (guesses.length) + " guesses."
-  }
-
-  const onKeyDown = useCallback((e: KeyboardEvent) => {
-    if (!e.ctrlKey && !e.metaKey) {
-      onKey(e.key);
-    }
-    if (e.key === "Backspace") {
-      e.preventDefault();
-    }
-  }, [onKey]);
-
-  useEffect(() => {
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [currentGuess, gameState, onKeyDown, guesses]);
-
-  function getData(): { [key: string]: number } {
+  function setFakeStats(): { [key: string]: number } {
     const diff = Array.from(target.values()).flat().length
     let data: { [key: string]: number };
     if (diff >= 90) {
@@ -285,7 +266,48 @@ function Game(props: GameProps) {
       data["<20"] += 1;
     }
 
-    return data
+    setStats(data);
+  }
+
+  function wonMessage(): string {
+    return reference + " (" + translation.substring(0, translation.indexOf("-")) + ") in " + (guesses.length) + " guesses."
+  }
+
+  const onKeyDown = useCallback((e: KeyboardEvent) => {
+    if (!e.ctrlKey && !e.metaKey) {
+      onKey(e.key);
+    }
+    if (e.key === "Backspace") {
+      e.preventDefault();
+    }
+  }, [onKey]);
+
+  useEffect(() => {
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [currentGuess, gameState, onKeyDown, guesses]);
+
+  function getStatsData(score: number) {
+    const url = "https://bibli.petraguardsoftware.com/stats.php?score=" + score + "&puzzleId=" + Math.floor((new Date().getTime() - new Date("March 9, 2022").getTime()) / (1000 * 3600 * 24))
+    const controller = new AbortController()
+
+    // 5 second timeout:
+    const timeoutId = setTimeout(() => controller.abort(), 3000)
+    fetch(url, {
+      method: 'post',
+      signal: controller.signal
+    }).then(response => response.json())
+      .then(data => {
+        setStats(data);
+      })
+      .catch(err => {
+        console.error(err);
+        setFakeStats();
+      });
+
   }
 
   return (
@@ -294,7 +316,7 @@ function Game(props: GameProps) {
         <button id="x" onClick={() => setRestart(restart + 1)}>X</button>
         {<Chart
           color={"#67b6c7"}
-          data={getData()}
+          data={stats}
           your={guesses.length}
           padding={10}
           gridColor={"#a55ca5"}
