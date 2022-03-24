@@ -65,7 +65,6 @@ function App() {
   const [random, setRandom] = useSetting<boolean>("random", false);
   const [puzzleId, setPuzzleId] = useState<number>(0);
   const [refresh, doRefresh] = useState(0);
-  const [initialLoad, setInitialLoad] = useState<boolean>(false);
   const [keyboard, setKeyboard] = useSetting<string>(
     "keyboard",
     "qwertyuiop-asdfghjkl-BzxcvbnmE"
@@ -75,23 +74,19 @@ function App() {
     "NIV-English"
   );
   const [target, setTarget] = useState<Map<number, CluedLetter[]>>(new Map());
-
   const [enterLeft, setEnterLeft] = useSetting<boolean>("enter-left", false);
 
 
   useEffect(() => {
-    setInitialLoad(true);
     if (random) {
       setPuzzleId(pickRandom(targets));
     } else {
       setPuzzleId(pick(targets));
     }
-    //doRefresh(prev => prev + 1);
-  }, [random, setInitialLoad, setPuzzleId]);
+  }, [random, setPuzzleId]);
 
   useEffect(() => {
     candidate = bookify(targets[puzzleId], languageOf(translation.substring(translation.indexOf("-") + 1)));
-    setInitialLoad(false);
     let url: string;
     if (translation !== "") {
       url = "https://petraguardsoftware.com/bibles.php?search=" + encodeURIComponent(candidate) + "&version=" + encodeURIComponent(translation.substring(0, translation.indexOf("-")));
