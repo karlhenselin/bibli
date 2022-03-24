@@ -138,6 +138,128 @@ function Game(props: GameProps) {
   }
 
   const onKey = useCallback((key: string) => {
+
+    function getStatsData(score: number) {
+      const url = "https://bibli.petraguardsoftware.com/stats.php?score=" + score + "&puzzleId=" + Math.floor((new Date().getTime() - new Date("March 9, 2022").getTime()) / (1000 * 3600 * 24))
+      const controller = new AbortController()
+
+      // 5 second timeout:
+      setTimeout(() => controller.abort(), 3000)
+      fetch(url, {
+        method: 'post',
+        signal: controller.signal
+      }).then(response => response.json())
+        .then(data => {
+          setStats(data);
+        })
+        .catch(err => {
+          console.error(err);
+          setFakeStats();
+        });
+    }
+
+    function setFakeStats() {
+      const diff = Array.from(target.values()).flat().length
+      let data: { [key: string]: number };
+      if (diff >= 90) {
+        data = {
+          "100+": 50,
+          "80-99": 46,
+          "60-79": 32,
+          "40-59": 10,
+          "20-39": 0,
+          "<20": 0
+        }
+      } else if (diff >= 80) {
+        data = {
+          "100+": 40,
+          "80-99": 56,
+          "60-79": 42,
+          "40-59": 15,
+          "20-39": 0,
+          "<20": 0
+        }
+      } else if (diff >= 70) {
+        data = {
+          "100+": 33,
+          "80-99": 64,
+          "60-79": 42,
+          "40-59": 25,
+          "20-39": 2,
+          "<20": 0
+        }
+      } else if (diff >= 60) {
+        data = {
+          "100+": 10,
+          "80-99": 38,
+          "60-79": 50,
+          "40-59": 55,
+          "20-39": 4,
+          "<20": 0
+        }
+      } else if (diff >= 50) {
+        data = {
+          "100+": 5,
+          "80-99": 25,
+          "60-79": 42,
+          "40-59": 43,
+          "20-39": 7,
+          "<20": 0
+        }
+      } else if (diff >= 40) {
+        data = {
+          "100+": 2,
+          "80-99": 20,
+          "60-79": 27,
+          "40-59": 38,
+          "20-39": 12,
+          "<20": 0
+        }
+      } else if (diff >= 30) {
+        data = {
+          "100+": 1,
+          "80-99": 12,
+          "60-79": 19,
+          "40-59": 36,
+          "20-39": 39,
+          "<20": 2
+        }
+      } else if (diff >= 20) {
+        data = {
+          "100+": 2,
+          "80-99": 13,
+          "60-79": 19,
+          "40-59": 33,
+          "20-39": 47,
+          "<20": 4
+        }
+      } else {
+        data = {
+          "100+": 2,
+          "80-99": 4,
+          "60-79": 7,
+          "40-59": 29,
+          "20-39": 39,
+          "<20": 30
+        }
+      }
+      if (guesses.length > 100) {
+        data["100+"] += 1;
+      } else if (guesses.length > 79) {
+        data["80-99"] += 1;
+      } else if (guesses.length > 59) {
+        data["60-79"] += 1;
+      } else if (guesses.length > 39) {
+        data["40-59"] += 1;
+      } else if (guesses.length > 19) {
+        data["20-39"] += 1;
+      } else {
+        data["<20"] += 1;
+      }
+
+      setStats(data);
+    }
+
     if (gameState === GameState.Won) {
       if (key === 'Escape') {
         setRestart(restart + 1);
@@ -161,113 +283,17 @@ function Game(props: GameProps) {
       if (allDone(t)) {
         setHint("");
         setGameState(GameState.Won);
-        getStatsData(guesses.length);
+        if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+          setFakeStats();
+        } else {
+          getStatsData(guesses.length);
+        }
       }
     }
 
   }, [letterInfo, guesses, target, restart, gameState]);
 
-  function setFakeStats(): { [key: string]: number } {
-    const diff = Array.from(target.values()).flat().length
-    let data: { [key: string]: number };
-    if (diff >= 90) {
-      data = {
-        "100+": 50,
-        "80-99": 46,
-        "60-79": 32,
-        "40-59": 10,
-        "20-39": 0,
-        "<20": 0
-      }
-    } else if (diff >= 80) {
-      data = {
-        "100+": 40,
-        "80-99": 56,
-        "60-79": 42,
-        "40-59": 15,
-        "20-39": 0,
-        "<20": 0
-      }
-    } else if (diff >= 70) {
-      data = {
-        "100+": 33,
-        "80-99": 64,
-        "60-79": 42,
-        "40-59": 25,
-        "20-39": 2,
-        "<20": 0
-      }
-    } else if (diff >= 60) {
-      data = {
-        "100+": 10,
-        "80-99": 38,
-        "60-79": 50,
-        "40-59": 55,
-        "20-39": 4,
-        "<20": 0
-      }
-    } else if (diff >= 50) {
-      data = {
-        "100+": 5,
-        "80-99": 25,
-        "60-79": 42,
-        "40-59": 43,
-        "20-39": 7,
-        "<20": 0
-      }
-    } else if (diff >= 40) {
-      data = {
-        "100+": 2,
-        "80-99": 20,
-        "60-79": 27,
-        "40-59": 38,
-        "20-39": 12,
-        "<20": 0
-      }
-    } else if (diff >= 30) {
-      data = {
-        "100+": 1,
-        "80-99": 12,
-        "60-79": 19,
-        "40-59": 36,
-        "20-39": 39,
-        "<20": 2
-      }
-    } else if (diff >= 20) {
-      data = {
-        "100+": 2,
-        "80-99": 13,
-        "60-79": 19,
-        "40-59": 33,
-        "20-39": 47,
-        "<20": 4
-      }
-    } else {
-      data = {
-        "100+": 2,
-        "80-99": 4,
-        "60-79": 7,
-        "40-59": 29,
-        "20-39": 39,
-        "<20": 30
-      }
-    }
-    if (guesses.length > 100) {
-      data["100+"] += 1;
-    } else if (guesses.length > 79) {
-      data["80-99"] += 1;
-    } else if (guesses.length > 59) {
-      data["60-79"] += 1;
-    } else if (guesses.length > 39) {
-      data["40-59"] += 1;
-    } else if (guesses.length > 19) {
-      data["20-39"] += 1;
-    } else {
-      data["<20"] += 1;
-    }
 
-    setStats(data);
-  }
 
   function wonMessage(): string {
     return reference + " (" + translation.substring(0, translation.indexOf("-")) + ") in " + (guesses.length) + " guesses."
@@ -290,25 +316,7 @@ function Game(props: GameProps) {
     };
   }, [currentGuess, gameState, onKeyDown, guesses]);
 
-  function getStatsData(score: number) {
-    const url = "https://bibli.petraguardsoftware.com/stats.php?score=" + score + "&puzzleId=" + Math.floor((new Date().getTime() - new Date("March 9, 2022").getTime()) / (1000 * 3600 * 24))
-    const controller = new AbortController()
 
-    // 5 second timeout:
-    const timeoutId = setTimeout(() => controller.abort(), 3000)
-    fetch(url, {
-      method: 'post',
-      signal: controller.signal
-    }).then(response => response.json())
-      .then(data => {
-        setStats(data);
-      })
-      .catch(err => {
-        console.error(err);
-        setFakeStats();
-      });
-
-  }
 
   return (
     <div className="Game" style={{ display: props.hidden ? "none" : "block" }}>

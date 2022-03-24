@@ -79,7 +79,6 @@ function App() {
   }
   function pickTodaysTarget(translation: string) {
     candidate = bookify(pick(targets), Language.English);
-    //candidate = '1 Samuel 2: 3';
     let url: string;
     if (translation !== "") {
       url = "https://petraguardsoftware.com/bibles.php?search=" + encodeURIComponent(candidate) + "&version=" + encodeURIComponent(translation.substring(0, translation.indexOf("-")));
