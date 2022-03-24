@@ -101,6 +101,7 @@ function App() {
         }
       }
     }
+    setTarget(new Map());
 
     fetch(url, {
       method: 'get'
@@ -167,7 +168,7 @@ function App() {
             }
               id="random"
             >{randomText()}</button>
-
+            {random && (<button onClick={() => setPuzzleId(pickRandom(targets))}>New</button>)}
             {link("❓", "About", "about")}
             {link("⚙️", "Settings", "settings")}
           </>
