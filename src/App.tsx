@@ -63,7 +63,7 @@ function App() {
   const [dark, setDark] = useSetting<boolean>("dark", prefersDark);
   const [colorBlind, setColorBlind] = useSetting<boolean>("colorblind", false);
   const [random, setRandom] = useSetting<boolean>("random", false);
-  const [puzzleId, setPuzzleId] = useState<number>(0);
+  const [puzzleId, setPuzzleId] = useState<number>(random ? pickRandom(targets) : pick(targets));
   const [refresh, doRefresh] = useState(0);
   const [keyboard, setKeyboard] = useSetting<string>(
     "keyboard",
@@ -122,7 +122,7 @@ function App() {
       .catch(err => {
         console.error(err);
       });
-  }, [translation, puzzleId, refresh]);
+  }, [translation, puzzleId, refresh, random]);
 
   useEffect(() => {
     document.body.className = dark ? "dark" : "";
