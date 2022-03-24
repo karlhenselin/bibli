@@ -21,6 +21,7 @@ interface GameProps {
   keyboardLayout: string;
   language: Language;
   target: Map<number, CluedLetter[]>;
+  puzzleId: number;
   reference: string;
   translation: string;
   refresh: number;
@@ -140,7 +141,7 @@ function Game(props: GameProps) {
   const onKey = useCallback((key: string) => {
 
     function getStatsData(score: number) {
-      const url = "https://bibli.petraguardsoftware.com/stats.php?score=" + score + "&puzzleId=" + Math.floor((new Date().getTime() - new Date("March 9, 2022").getTime()) / (1000 * 3600 * 24))
+      const url = "https://bibli.petraguardsoftware.com/stats.php?score=" + score + "&puzzleId=" + props.puzzleId
       const controller = new AbortController()
 
       // 5 second timeout:
@@ -291,7 +292,7 @@ function Game(props: GameProps) {
       }
     }
 
-  }, [letterInfo, guesses, target, restart, gameState]);
+  }, [letterInfo, guesses, target, restart, gameState, props.puzzleId]);
 
 
 

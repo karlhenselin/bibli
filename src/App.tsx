@@ -1,10 +1,10 @@
 import "./App.css";
-import { pick } from "./util";
+import { pick, pickRandom } from "./util";
 import Game from "./Game";
 import { useEffect, useState } from "react";
 import { About } from "./About";
 import { languageOf } from "./books";
-import { Language, bookify } from "./books";
+import { bookify } from "./books";
 import targetList from "./targets.json";
 import { CluedLetter, isPunctuation, Clue } from "./clue";
 
@@ -62,7 +62,10 @@ function App() {
     window.matchMedia("(prefers-color-scheme: dark)").matches;
   const [dark, setDark] = useSetting<boolean>("dark", prefersDark);
   const [colorBlind, setColorBlind] = useSetting<boolean>("colorblind", false);
+  const [random, setRandom] = useSetting<boolean>("random", false);
+  const [puzzleId, setPuzzleId] = useState<number>(0);
   const [refresh, doRefresh] = useState(0);
+  const [initialLoad, setInitialLoad] = useState<boolean>(false);
   const [keyboard, setKeyboard] = useSetting<string>(
     "keyboard",
     "qwertyuiop-asdfghjkl-BzxcvbnmE"
@@ -74,11 +77,21 @@ function App() {
   const [target, setTarget] = useState<Map<number, CluedLetter[]>>(new Map());
 
   const [enterLeft, setEnterLeft] = useSetting<boolean>("enter-left", false);
-  if (target.size === 0) {
-    pickTodaysTarget(translation);
-  }
-  function pickTodaysTarget(translation: string) {
-    candidate = bookify(pick(targets), Language.English);
+
+
+  useEffect(() => {
+    setInitialLoad(true);
+    if (random) {
+      setPuzzleId(pickRandom(targets));
+    } else {
+      setPuzzleId(pick(targets));
+    }
+    //doRefresh(prev => prev + 1);
+  }, [random, setInitialLoad, setPuzzleId]);
+
+  useEffect(() => {
+    candidate = bookify(targets[puzzleId], languageOf(translation.substring(translation.indexOf("-") + 1)));
+    setInitialLoad(false);
     let url: string;
     if (translation !== "") {
       url = "https://petraguardsoftware.com/bibles.php?search=" + encodeURIComponent(candidate) + "&version=" + encodeURIComponent(translation.substring(0, translation.indexOf("-")));
@@ -108,13 +121,13 @@ function App() {
           .replace(/\s{2,}/g, ' ')//get rid of all enters and doubled spaces   
           .replace(/^[\s—-]+|[\s—-]+$/g, "")//trim;
 
-        setTarget(wordsMapFromText(text));
+        setTarget(wordsMapFromText(candidate + " " + text));
 
       })
       .catch(err => {
         console.error(err);
       });
-  }
+  }, [translation, puzzleId, refresh]);
 
   useEffect(() => {
     document.body.className = dark ? "dark" : "";
@@ -135,6 +148,14 @@ function App() {
     </button>
   );
   let language = languageOf(translation.substring(translation.indexOf("-") + 1));
+
+  function randomText(): string {
+    if (random) {
+      return "Random";
+    }
+    return "Daily"
+  }
+
   return (
     <div className={"App-container" + (colorBlind ? " color-blind" : "")}>
       <h1>
@@ -145,6 +166,13 @@ function App() {
           link("❌", "Close", "game")
         ) : (
           <>
+            <button onClick={() => {
+              setRandom((x: boolean) => !x);
+            }
+            }
+              id="random"
+            >{randomText()}</button>
+
             {link("❓", "About", "about")}
             {link("⚙️", "Settings", "settings")}
           </>
@@ -189,7 +217,6 @@ function App() {
               value={translation}
               onChange={(e) => {
                 setTranslation(e.target.value);
-                pickTodaysTarget(e.target.value);
                 doRefresh(prev => prev + 1);
               }}
             >
@@ -239,7 +266,8 @@ function App() {
           )}
           language={language}
           target={target}
-          reference={bookify(pick(targets), language)}
+          reference={bookify(targets[puzzleId], language)}
+          puzzleId={puzzleId}
           translation={translation}
         />) || "Loading..."}
     </div>
@@ -247,3 +275,5 @@ function App() {
 }
 
 export default App;
+
+
