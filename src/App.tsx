@@ -1,16 +1,19 @@
 import "./App.css";
 import { pick, pickRandom } from "./util";
 import Game from "./Game";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { About } from "./About";
-import { languageOf } from "./books";
+import { languageOf, localeOf } from "./books";
 import { bookify } from "./books";
 import targetList from "./targets.json";
 import { CluedLetter, isPunctuation, Clue } from "./clue";
+import i18n from './i18n';
+import Loading from "./Loading"
+import LocaleContext from "./LocaleContext"
+
 
 const targets = targetList;
 let candidate: string;
-
 export function wordsMapFromText(target: string): Map<number, CluedLetter[]> {
   const wordsMap: Map<number, CluedLetter[]> = new Map<number, CluedLetter[]>();
   const words: string[] = target.split(" ");
@@ -60,6 +63,7 @@ function App() {
   const prefersDark =
     window.matchMedia &&
     window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const [locale, setLocale] = useState(i18n.language);
   const [dark, setDark] = useSetting<boolean>("dark", prefersDark);
   const [colorBlind, setColorBlind] = useSetting<boolean>("colorblind", false);
   const [random, setRandom] = useSetting<boolean>("random", false);
@@ -76,6 +80,8 @@ function App() {
   const [target, setTarget] = useState<Map<number, CluedLetter[]>>(new Map());
   const [enterLeft, setEnterLeft] = useSetting<boolean>("enter-left", false);
 
+  i18n.on('languageChanged', (lng) => setLocale(i18n.language));
+
 
   useEffect(() => {
     if (random) {
@@ -84,6 +90,13 @@ function App() {
       setPuzzleId(pick(targets));
     }
   }, [random, setPuzzleId]);
+
+  useEffect(() => {
+    const l: string = localeOf(translation.substring(translation.indexOf("-") + 1));
+    if (locale !== l) {
+      i18n.changeLanguage(l);
+    }
+  }, [translation, locale]);
 
   useEffect(() => {
     candidate = bookify(targets[puzzleId], languageOf(translation.substring(translation.indexOf("-") + 1)));
@@ -147,128 +160,138 @@ function App() {
 
   function randomText(): string {
     if (random) {
-      return "Random";
+      return i18n.t("random");
     }
-    return "Daily"
+    return i18n.t("daily")
   }
 
   return (
-    <div className={"App-container" + (colorBlind ? " color-blind" : "")}>
-      <h1>
-        BIBLI
-      </h1>
-      <div className="top-left">
-        <button onClick={() => {
-          setRandom((x: boolean) => !x);
-        }
-        }
-        >{randomText()}</button>
-        {random && (<button onClick={() => setPuzzleId(pickRandom(targets))}>Randomize</button>)}
-      </div>
-      <div className="top-right">
-        {page !== "game" ? (
-          link("❌", "Close", "game")
-        ) : (
-          <>
+    <LocaleContext.Provider value={{ locale, setLocale }}>
+      <Suspense fallback={<Loading />}>
+        <div className={"App-container" + (colorBlind ? " color-blind" : "")}>
+          <h1>
+            BIBLI
+          </h1>
+          <div className="top-left">
+            {page === "game" && (<button onClick={() => {
+              setRandom((x: boolean) => !x);
+            }
+            }
+            >{randomText()}</button>
+            )}
+            {page === "game" && random && (<button onClick={() => setPuzzleId(pickRandom(targets))}>{i18n.t("Randomize")}</button>)}
 
-            {link("❓", "About", "about")}
-            {link("⚙️", "Settings", "settings")}
-          </>
-        )}
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          left: 5,
-          top: 5,
-          visibility: page === "game" ? "visible" : "hidden",
-        }}
-      >
-      </div>
-      {page === "about" && <About />}
-      {page === "settings" && (
-        <div className="Settings">
-          <div className="Settings-setting">
-            <input
-              id="dark-setting"
-              type="checkbox"
-              checked={dark}
-              onChange={() => setDark((x: boolean) => !x)}
-            />
-            <label htmlFor="dark-setting">Dark theme</label>
           </div>
-          <div className="Settings-setting">
-            <input
-              id="colorblind-setting"
-              type="checkbox"
-              checked={colorBlind}
-              onChange={() => setColorBlind((x: boolean) => !x)}
-            />
-            <label htmlFor="colorblind-setting">High-contrast colors</label>
+          <div className="top-right">
+            {page !== "game" ? (
+              link("❌", "Close", "game")
+            ) : (
+              <>
+
+                {link("❓", i18n.t("About"), "about")}
+                {link("⚙️", i18n.t("Settings"), "settings")}
+              </>
+            )}
           </div>
-
-          <div className="Settings-setting">
-            <label htmlFor="translation-setting">Bible:</label>
-            <select
-              name="translation-setting"
-              id="translation-setting"
-              value={translation}
-              onChange={(e) => {
-                setTranslation(e.target.value);
-                doRefresh(prev => prev + 1);
-              }}
-            >
-              <option value="HCSB-English">Holman Christian Standard Bible (HCSB, English)</option>
-              <option value="NIV-English">New International Version (NIV, English)</option>
-              <option value="LBLA-Spanish">La Biblia de las Américas (LBLA, Español)</option>
-              <option value="LUTH1545-German">Luther Bible 1545 (LUTH, Deutsch)</option>
-              <option value="NEG1979-French">Nouvelle Edition de Genève 1979 (NEG, Français)</option>
-
-
-            </select>
+          <div
+            style={{
+              position: "absolute",
+              left: 5,
+              top: 5,
+              visibility: page === "game" ? "visible" : "hidden",
+            }}
+          >
           </div>
-          <div className="Settings-setting">
-            <label htmlFor="keyboard-setting">Keyboard layout:</label>
-            <select
-              name="keyboard-setting"
-              id="keyboard-setting"
-              value={keyboard}
-              onChange={(e) => setKeyboard(e.target.value)}
-            >
-              <option value="qwertyuiop-asdfghjkl-BzxcvbnmE">QWERTY</option>
-              <option value="azertyuiop-qsdfghjklm-BwxcvbnE">AZERTY</option>
-              <option value="qwertzuiop-asdfghjkl-ByxcvbnmE">QWERTZ</option>
-              <option value="BpyfgcrlE-aoeuidhtns-qjkxbmwvz">Dvorak</option>
-              <option value="qwfpgjluy-arstdhneio-BzxcvbkmE">Colemak</option>
-            </select>
-            <input
-              style={{ marginLeft: 20 }}
-              id="enter-left-setting"
-              type="checkbox"
-              checked={enterLeft}
-              onChange={() => setEnterLeft((x: boolean) => !x)}
-            />
-            <label htmlFor="enter-left-setting">"Enter" on left side</label>
-          </div>
-        </div>
-      )}
+          {page === "about" && <About />}
+          {page === "settings" && (
+            <div className="Settings">
+              <div className="Settings-setting">
+                <input
+                  id="dark-setting"
+                  type="checkbox"
+                  checked={dark}
+                  onChange={() => setDark((x: boolean) => !x)}
+                />
+                <label htmlFor="dark-setting">{i18n.t("Dark theme")}</label>
+              </div>
+              <div className="Settings-setting">
+                <input
+                  id="colorblind-setting"
+                  type="checkbox"
+                  checked={colorBlind}
+                  onChange={() => setColorBlind((x: boolean) => !x)}
+                />
+                <label htmlFor="colorblind-setting">{i18n.t("High-contrast colors")}</label>
+              </div>
 
-      {(target.size > 0 &&
-        <Game
-          hidden={page !== "game"}
-          refresh={refresh}
-          colorBlind={colorBlind}
-          keyboardLayout={keyboard.replaceAll(
-            /[BE]/g,
-            (x) => (enterLeft ? "EB" : "BE")["BE".indexOf(x)]
-          )}
-          language={language}
-          target={target}
-          reference={bookify(targets[puzzleId], language)}
-          puzzleId={puzzleId}
-          translation={translation}
-        />) || "Loading..."}
-    </div>
+              <div className="Settings-setting">
+                <label htmlFor="translation-setting">{i18n.t("Bible")}:</label>
+                <select
+                  name="translation-setting"
+                  id="translation-setting"
+                  value={translation}
+                  onChange={(e) => {
+                    setTranslation(e.target.value);
+                    doRefresh(prev => prev + 1);
+                  }}
+                >
+                  <option value="HCSB-English">Holman Christian Standard Bible (HCSB, English)</option>
+                  <option value="NIV-English">New International Version (NIV, English)</option>
+                  <option value="LBLA-Spanish">La Biblia de las Américas (LBLA, Español)</option>
+                  <option value="LUTH1545-German">Luther Bible 1545 (LUTH, Deutsch)</option>
+                  <option value="NEG1979-French">Nouvelle Edition de Genève 1979 (NEG, Français)</option>
+
+
+                </select>
+              </div>
+              <div className="Settings-setting">
+                <label htmlFor="keyboard-setting">{i18n.t("Keyboard layout")}:</label>
+                <select
+                  name="keyboard-setting"
+                  id="keyboard-setting"
+                  value={keyboard}
+                  onChange={(e) => setKeyboard(e.target.value)}
+                >
+                  <option value="qwertyuiop-asdfghjkl-BzxcvbnmE">QWERTY</option>
+                  <option value="azertyuiop-qsdfghjklm-BwxcvbnE">AZERTY</option>
+                  <option value="qwertzuiop-asdfghjkl-ByxcvbnmE">QWERTZ</option>
+                  <option value="BpyfgcrlE-aoeuidhtns-qjkxbmwvz">Dvorak</option>
+                  <option value="qwfpgjluy-arstdhneio-BzxcvbkmE">Colemak</option>
+                </select>
+                <input
+                  style={{ marginLeft: 20 }}
+                  id="enter-left-setting"
+                  type="checkbox"
+                  checked={enterLeft}
+                  onChange={() => setEnterLeft((x: boolean) => !x)}
+                />
+                <label htmlFor="enter-left-setting">{i18n.t('"Enter" on left side')}</label>
+              </div>
+            </div>
+          )
+          }
+
+          {
+            (target.size > 0 &&
+              <Game
+                hidden={page !== "game"}
+                refresh={refresh}
+                colorBlind={colorBlind}
+                keyboardLayout={keyboard.replaceAll(
+                  /[BE]/g,
+                  (x) => (enterLeft ? "EB" : "BE")["BE".indexOf(x)]
+                )}
+                language={language}
+                target={target}
+                reference={bookify(targets[puzzleId], language)}
+                puzzleId={puzzleId}
+                translation={translation}
+              />) || i18n.t('Loading') + "..."
+          }
+        </div >
+      </Suspense>
+    </LocaleContext.Provider>
+
   );
 }
 

@@ -4,6 +4,7 @@ import { Clue, clue, guessesNotInTarget, CluedLetter } from "./clue";
 import { Keyboard } from "./Keyboard";
 import { Language } from "./books";
 import { Chart, getCanvas } from "./chart";
+import i18n from './i18n';
 import {
   gameName
 } from "./util";
@@ -61,7 +62,7 @@ function Game(props: GameProps) {
   const [stats, setStats] = useState<{ [key: string]: number }>({});
 
   useEffect(() => {
-    setHint('Make your first guess!');
+    setHint(i18n.t('Make your first guess!'));
     setGuesses([]);
     setCurrentGuess("");
     setLetterInfo(new Map<string, Clue>());
@@ -297,7 +298,7 @@ function Game(props: GameProps) {
 
 
   function wonMessage(): string {
-    return reference + " (" + translation.substring(0, translation.indexOf("-")) + ") in " + (guesses.length) + " guesses."
+    return reference + " (" + translation.substring(0, translation.indexOf("-")) + ") " + i18n.t("in") + " " + (guesses.length) + " " + i18n.t("guesses") + "."
   }
 
   const onKeyDown = useCallback((e: KeyboardEvent) => {
@@ -389,7 +390,7 @@ function Game(props: GameProps) {
             share("Link copied to clipboard!");
           }}
         >
-          Share a link to this game
+          {i18n.t("Share a link to this game")}
         </button>{" "}
 
       </p>
