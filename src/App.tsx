@@ -157,18 +157,20 @@ function App() {
       <h1>
         BIBLI
       </h1>
+      <div className="top-left">
+        <button onClick={() => {
+          setRandom((x: boolean) => !x);
+        }
+        }
+        >{randomText()}</button>
+        {random && (<button onClick={() => setPuzzleId(pickRandom(targets))}>Randomize</button>)}
+      </div>
       <div className="top-right">
         {page !== "game" ? (
           link("❌", "Close", "game")
         ) : (
           <>
-            <button onClick={() => {
-              setRandom((x: boolean) => !x);
-            }
-            }
-              id="random"
-            >{randomText()}</button>
-            {random && (<button onClick={() => setPuzzleId(pickRandom(targets))}>New</button>)}
+
             {link("❓", "About", "about")}
             {link("⚙️", "Settings", "settings")}
           </>

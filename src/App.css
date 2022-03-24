@@ -309,6 +309,15 @@ a:active {
   margin-inline-end: 8px;
 }
 
+.top-left {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+}
+.top-left button {
+  margin: 10px 5px 0 0;
+}
+
 .top-right {
   position: absolute;
   top: 5px;
@@ -325,6 +334,10 @@ a:active {
 }
 
 .top-right > * + * {
+  margin-inline-start: 8px;
+}
+
+.top-left > * + * {
   margin-inline-start: 8px;
 }
 
