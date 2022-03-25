@@ -68,7 +68,7 @@ function App() {
   const [colorBlind, setColorBlind] = useSetting<boolean>("colorblind", false);
   const [random, setRandom] = useSetting<boolean>("random", false);
   const [puzzleId, setPuzzleId] = useState<number>(random ? pickRandom(targets) : pick(targets));
-  const [refresh, doRefresh] = useState(0);
+  const [loadingVerse, setLoadingVerse] = useState<boolean>(false);
   const [keyboard, setKeyboard] = useSetting<string>(
     "keyboard",
     "qwertyuiop-asdfghjkl-BzxcvbnmE"
@@ -131,12 +131,12 @@ function App() {
           .replace(/^[\s—-]+|[\s—-]+$/g, "")//trim;
 
         setTarget(wordsMapFromText(candidate + " " + text));
-
+        setLoadingVerse(false);
       })
       .catch(err => {
         console.error(err);
       });
-  }, [translation, puzzleId, refresh, random]);
+  }, [translation, puzzleId]);
 
   useEffect(() => {
     document.body.className = dark ? "dark" : "";
@@ -173,13 +173,16 @@ function App() {
             BIBLI
           </h1>
           <div className="top-left">
-            {page === "game" && (<button onClick={() => {
+            {page === "game" && (<button disabled={loadingVerse} onClick={() => {
               setRandom((x: boolean) => !x);
-            }
-            }
+              setLoadingVerse(true);
+            }}
             >{randomText()}</button>
             )}
-            {page === "game" && random && (<button onClick={() => setPuzzleId(pickRandom(targets))}>{i18n.t("Randomize")}</button>)}
+            {page === "game" && random && (<button disabled={loadingVerse} onClick={() => {
+              setPuzzleId(pickRandom(targets));
+              setLoadingVerse(true);
+            }}>{i18n.t("Randomize")}</button>)}
 
           </div>
           <div className="top-right">
@@ -187,7 +190,6 @@ function App() {
               link("❌", "Close", "game")
             ) : (
               <>
-
                 {link("❓", i18n.t("About"), "about")}
                 {link("⚙️", i18n.t("Settings"), "settings")}
               </>
@@ -227,12 +229,13 @@ function App() {
               <div className="Settings-setting">
                 <label htmlFor="translation-setting">{i18n.t("Bible")}:</label>
                 <select
+                  disabled={loadingVerse}
                   name="translation-setting"
                   id="translation-setting"
                   value={translation}
                   onChange={(e) => {
                     setTranslation(e.target.value);
-                    doRefresh(prev => prev + 1);
+                    setLoadingVerse(true);
                   }}
                 >
                   <option value="HCSB-English">Holman Christian Standard Bible (HCSB, English)</option>
@@ -240,7 +243,6 @@ function App() {
                   <option value="LBLA-Spanish">La Biblia de las Américas (LBLA, Español)</option>
                   <option value="LUTH1545-German">Luther Bible 1545 (LUTH, Deutsch)</option>
                   <option value="NEG1979-French">Nouvelle Edition de Genève 1979 (NEG, Français)</option>
-
 
                 </select>
               </div>
@@ -275,7 +277,7 @@ function App() {
             (target.size > 0 &&
               <Game
                 hidden={page !== "game"}
-                refresh={refresh}
+                refresh={0}
                 colorBlind={colorBlind}
                 keyboardLayout={keyboard.replaceAll(
                   /[BE]/g,
