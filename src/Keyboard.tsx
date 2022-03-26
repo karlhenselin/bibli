@@ -26,21 +26,6 @@ export function Keyboard(props: KeyboardProps) {
               className += " " + clueClass(Clue.Absent);
               shouldDisable = true;
             }
-            if (clue === Clue.Fade0) {
-              shouldDisable = true;
-            }
-            if (clue === Clue.Fade1) {
-              shouldDisable = true;
-            }
-            if (clue === Clue.Fade2) {
-              shouldDisable = true;
-            }
-            if (clue === Clue.Fade3) {
-              shouldDisable = true;
-            }
-            if (clue === Clue.Fade4) {
-              shouldDisable = true;
-            }
             if (label.length > 1) {
               className += " Game-keyboard-button-wide";
             }

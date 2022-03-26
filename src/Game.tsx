@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Passage } from "./Passage";
 import { Clue, clue, guessesNotInTarget, CluedLetter } from "./clue";
 import { Keyboard } from "./Keyboard";
@@ -57,7 +57,6 @@ function Game(props: GameProps) {
   const [translation, setTranslation] = useState<string>(() => { return props.translation });
   const [letterInfo, setLetterInfo] = useState<Map<string, Clue>>(() => new Map<string, Clue>());
   const [hint, setHint] = useState<string>('Make your first guess!');
-  const tableRef = useRef<HTMLTableElement>(null);
   const [restart, setRestart] = useState<number>(1);
   const [stats, setStats] = useState<{ [key: string]: number }>({});
 
@@ -268,7 +267,6 @@ function Game(props: GameProps) {
       }
     } else if (/^[a-z]$/i.test(key)) {
       setCurrentGuess(key.toLowerCase());
-      tableRef.current?.focus();
       setHint("");
       setGuesses((guesses) => guesses.concat([key.toLowerCase()]));
       const t = mergeClues(new Map(target), clue(guesses.concat([key.toLowerCase()]).join(''), target))
@@ -363,7 +361,6 @@ function Game(props: GameProps) {
         className="Game-rows"
         tabIndex={0}
         aria-label="Passage"
-        ref={tableRef}
       >
         <Passage
           key={0}
