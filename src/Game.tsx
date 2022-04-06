@@ -110,21 +110,20 @@ function Game(props: GameProps) {
   }
 
   async function share(copiedHint: string, text?: string) {
-    const url = window.location.origin + window.location.pathname
-    const body = url + (text ? "\n\n" + text : "");
+    const url = window.location.href
     if (
       /android|iphone|ipad|ipod|webos/i.test(navigator.userAgent) &&
       !/firefox/i.test(navigator.userAgent)
     ) {
       try {
-        await navigator.share({ text: body });
+        await navigator.share({ text: url });
         return;
       } catch (e) {
         console.warn("navigator.share failed:", e);
       }
     }
     try {
-      await navigator.clipboard.writeText(body);
+      await navigator.clipboard.writeText(url);
       setHint(copiedHint);
       return;
     } catch (e) {
@@ -278,7 +277,7 @@ function Game(props: GameProps) {
       if (allDone(t)) {
         setHint("");
         setGameState(GameState.Won);
-        if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+        if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || reference === "Custom Game") {
           setFakeStats();
         } else {
           getStatsData(guesses.length);
@@ -291,7 +290,11 @@ function Game(props: GameProps) {
 
 
   function wonMessage(): string {
-    return reference + " (" + translation.substring(0, translation.indexOf("-")) + ") " + i18n.t("in") + " " + (guesses.length) + " " + i18n.t("guesses") + "."
+    if (reference !== "Custom Game") {
+      return reference + " (" + translation.substring(0, translation.indexOf("-")) + ") " + i18n.t("in") + " " + (guesses.length) + " " + i18n.t("guesses") + "."
+    }
+    return i18n.t(reference) + " " + i18n.t("in") + " " + (guesses.length) + " " + i18n.t("guesses") + "."
+
   }
 
   const onKeyDown = useCallback((e: KeyboardEvent) => {
@@ -332,7 +335,7 @@ function Game(props: GameProps) {
         </div>
         {gameState !== GameState.Playing && (
           <div className="buttons">
-            <button
+            {reference !== "Custom Game" && <button
               onClick={() => {
                 shareWon(
                   "Result copied to clipboard!",
@@ -342,6 +345,7 @@ function Game(props: GameProps) {
             >
               Share results
             </button>
+            }
             <button
               onClick={() => {
                 setRestart(prev => prev + 1);
@@ -384,7 +388,6 @@ function Game(props: GameProps) {
         >
           {i18n.t("Share a link to this game")}
         </button>{" "}
-
       </p>
     </div>
   );

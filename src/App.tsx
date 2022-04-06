@@ -56,8 +56,22 @@ function useSetting<T>(
   return [current, setSetting];
 }
 
+const params = new URLSearchParams(window.location.search);
+
+
 
 function App() {
+  function getinitialPuzzleText(): string | null {
+    if (params.get("text") === null) {
+      return null;
+    }
+    try {
+      return window.atob(params.get("text")!)
+    } catch (error) {
+      return null
+    }
+  }
+
   type Page = "game" | "about" | "settings";
   const [page, setPage] = useState<Page>("game");
   const prefersDark =
@@ -67,6 +81,7 @@ function App() {
   const [dark, setDark] = useSetting<boolean>("dark", prefersDark);
   const [colorBlind, setColorBlind] = useSetting<boolean>("colorblind", false);
   const [random, setRandom] = useSetting<boolean>("random", false);
+  const [puzzleText, setPuzzleText] = useState<string | null>(getinitialPuzzleText())
   const [puzzleId, setPuzzleId] = useState<number>(random ? pickRandom(targets) : pick(targets));
   const [loadingVerse, setLoadingVerse] = useState<boolean>(false);
   const [keyboard, setKeyboard] = useSetting<string>(
@@ -99,43 +114,48 @@ function App() {
   }, [translation, locale]);
 
   useEffect(() => {
-    candidate = bookify(targets[puzzleId], languageOf(translation.substring(translation.indexOf("-") + 1)));
-    let url: string;
-    if (translation !== "") {
-      url = "https://petraguardsoftware.com/bibles.php?search=" + encodeURIComponent(candidate) + "&version=" + encodeURIComponent(translation.substring(0, translation.indexOf("-")));
-    } else {
-      url = "https://petraguardsoftware.com/bibles.php?search=" + encodeURIComponent(candidate);
-    }
+    if (puzzleText === null) {
+      candidate = bookify(targets[puzzleId], languageOf(translation.substring(translation.indexOf("-") + 1)));
+      let url: string;
+      if (translation !== "") {
+        url = "https://petraguardsoftware.com/bibles.php?search=" + encodeURIComponent(candidate) + "&version=" + encodeURIComponent(translation.substring(0, translation.indexOf("-")));
+      } else {
+        url = "https://petraguardsoftware.com/bibles.php?search=" + encodeURIComponent(candidate);
+      }
 
-    function tryReplaceSpace(x: HTMLCollectionOf<Element>) {
-      if (x) {
-        for (let y of x) {
-          y.replaceWith(" ");
+      function tryReplaceSpace(x: HTMLCollectionOf<Element>) {
+        if (x) {
+          for (let y of x) {
+            y.replaceWith(" ");
+          }
         }
       }
+      setTarget(new Map());
+
+      fetch(url, {
+        method: 'get'
+      }).then(response => response.text())
+        .then(data => {
+          const div = document.createElement("div");
+          div.innerHTML = data;
+          tryReplaceSpace(div.getElementsByTagName('br'));
+          const text: string = div.innerText
+            .replace(/[\u2018\u2019]/g, "'")
+            .replace(/ß/g, "ss")
+            .replace(/[\u201C\u201D]/g, '')
+            .replace(/\s{2,}/g, ' ')//get rid of all enters and doubled spaces   
+            .replace(/^[\s—-]+|[\s—-]+$/g, "")//trim;
+
+          setTarget(wordsMapFromText(candidate + " " + text));
+          setLoadingVerse(false);
+        })
+        .catch(err => {
+          console.error(err);
+        });
+    } else {
+      setTarget(wordsMapFromText(puzzleText));
+
     }
-    setTarget(new Map());
-
-    fetch(url, {
-      method: 'get'
-    }).then(response => response.text())
-      .then(data => {
-        const div = document.createElement("div");
-        div.innerHTML = data;
-        tryReplaceSpace(div.getElementsByTagName('br'));
-        const text: string = div.innerText
-          .replace(/[\u2018\u2019]/g, "'")
-          .replace(/ß/g, "ss")
-          .replace(/[\u201C\u201D]/g, '')
-          .replace(/\s{2,}/g, ' ')//get rid of all enters and doubled spaces   
-          .replace(/^[\s—-]+|[\s—-]+$/g, "")//trim;
-
-        setTarget(wordsMapFromText(candidate + " " + text));
-        setLoadingVerse(false);
-      })
-      .catch(err => {
-        console.error(err);
-      });
   }, [translation, puzzleId]);
 
   useEffect(() => {
@@ -173,7 +193,7 @@ function App() {
             BIBLI
           </h1>
           <div className="top-left">
-            {page === "game" && (<button disabled={loadingVerse} onClick={() => {
+            {page === "game" && puzzleText === null && (<button disabled={loadingVerse} onClick={() => {
               setRandom((x: boolean) => !x);
               setLoadingVerse(true);
             }}
@@ -225,28 +245,29 @@ function App() {
                 />
                 <label htmlFor="colorblind-setting">{i18n.t("High-contrast colors")}</label>
               </div>
+              {puzzleText === null &&
+                <div className="Settings-setting">
+                  <label htmlFor="translation-setting">{i18n.t("Bible")}:</label>
+                  <select
+                    disabled={loadingVerse}
+                    name="translation-setting"
+                    id="translation-setting"
+                    value={translation}
+                    onChange={(e) => {
+                      setTranslation(e.target.value);
+                      setLoadingVerse(true);
+                    }}
+                  >
+                    <option value="HCSB-English">Holman Christian Standard Bible (HCSB, English)</option>
+                    <option value="NIV-English">New International Version (NIV, English)</option>
+                    <option value="LBLA-Spanish">La Biblia de las Américas (LBLA, Español)</option>
+                    <option value="LUTH1545-German">Luther Bible 1545 (LUTH, Deutsch)</option>
+                    <option value="NEG1979-French">Nouvelle Edition de Genève 1979 (NEG, Français)</option>
+                    <option value="SFB15-Swedish">Svenska Folkbibeln 2015 (SFB15, Svenska)</option>
 
-              <div className="Settings-setting">
-                <label htmlFor="translation-setting">{i18n.t("Bible")}:</label>
-                <select
-                  disabled={loadingVerse}
-                  name="translation-setting"
-                  id="translation-setting"
-                  value={translation}
-                  onChange={(e) => {
-                    setTranslation(e.target.value);
-                    setLoadingVerse(true);
-                  }}
-                >
-                  <option value="HCSB-English">Holman Christian Standard Bible (HCSB, English)</option>
-                  <option value="NIV-English">New International Version (NIV, English)</option>
-                  <option value="LBLA-Spanish">La Biblia de las Américas (LBLA, Español)</option>
-                  <option value="LUTH1545-German">Luther Bible 1545 (LUTH, Deutsch)</option>
-                  <option value="NEG1979-French">Nouvelle Edition de Genève 1979 (NEG, Français)</option>
-                  <option value="SFB15-Swedish">Svenska Folkbibeln 2015 (SFB15, Svenska)</option>
-
-                </select>
-              </div>
+                  </select>
+                </div>
+              }
               <div className="Settings-setting">
                 <label htmlFor="keyboard-setting">{i18n.t("Keyboard layout")}:</label>
                 <select
@@ -286,9 +307,9 @@ function App() {
                 )}
                 language={language}
                 target={target}
-                reference={bookify(targets[puzzleId], language)}
+                reference={puzzleText === null ? bookify(targets[puzzleId], language) : "Custom Game"}
                 puzzleId={puzzleId}
-                translation={translation}
+                translation={puzzleText === null ? translation : ""}
               />) || i18n.t('Loading') + "..."
           }
         </div >
