@@ -30,7 +30,7 @@ export function Passage(props: PassageProps) {
     wordDivs.push(
       <div
         key={key + "p"}
-        className={"word word" + letterDivs.length}
+        className={letterDivs.length > 12 ? "word long" : "word"}
       >
         {letterDivs}
       </div>

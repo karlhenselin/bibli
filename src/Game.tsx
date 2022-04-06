@@ -32,14 +32,9 @@ interface GameProps {
 function mergeClues(letterStates: Map<number, CluedLetter[]>, arg1: Map<number, CluedLetter[]>): Map<number, CluedLetter[]> {
   letterStates.forEach(function (value, key) {
     for (const i in value) {
-      if (value[i].clue === Clue.Correct
-        || value[i].clue === Clue.Punctuation
+      if (value[i].clue !== Clue.Correct
+        && value[i].clue !== Clue.Punctuation
       ) {
-        //no change
-      } else if (arg1.get(key)![i].clue === Clue.Correct) {
-        value[i].clue = Clue.Correct;
-      }
-      else {
         value[i].clue = arg1.get(key)![i].clue;
       }
     }
@@ -56,7 +51,7 @@ function Game(props: GameProps) {
   const [reference, setReference] = useState<string>(() => { return props.reference });
   const [translation, setTranslation] = useState<string>(() => { return props.translation });
   const [letterInfo, setLetterInfo] = useState<Map<string, Clue>>(() => new Map<string, Clue>());
-  const [hint, setHint] = useState<string>('Make your first guess!');
+  const [hint, setHint] = useState<string>(i18n.t('Make your first guess!'));
   const [restart, setRestart] = useState<number>(1);
   const [stats, setStats] = useState<{ [key: string]: number }>({});
 
@@ -96,7 +91,7 @@ function Game(props: GameProps) {
           const shareData = {
             files: filesArray,
             text: wonMessage(),
-            url: "https://bibli.petraguardsoftware.com"
+            url: "https://bibli.petraguardsoftware.com/"
           };
           await navigator.share(shareData);
           return;

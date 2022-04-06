@@ -243,6 +243,7 @@ function App() {
                   <option value="LBLA-Spanish">La Biblia de las Américas (LBLA, Español)</option>
                   <option value="LUTH1545-German">Luther Bible 1545 (LUTH, Deutsch)</option>
                   <option value="NEG1979-French">Nouvelle Edition de Genève 1979 (NEG, Français)</option>
+                  <option value="SFB15-Swedish">Svenska Folkbibeln 2015 (SFB15, Svenska)</option>
 
                 </select>
               </div>
