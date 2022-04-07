@@ -91,7 +91,7 @@ function Game(props: GameProps) {
           const shareData = {
             files: filesArray,
             text: wonMessage(),
-            url: "https://bibli.petraguardsoftware.com/"
+            url: window.location.href
           };
           await navigator.share(shareData);
           return;
@@ -285,7 +285,7 @@ function Game(props: GameProps) {
       }
     }
 
-  }, [letterInfo, guesses, target, restart, gameState, props.puzzleId]);
+  }, [letterInfo, guesses, target, restart, gameState, props.puzzleId, reference]);
 
 
 
@@ -293,7 +293,7 @@ function Game(props: GameProps) {
     if (reference !== "Custom Game") {
       return reference + " (" + translation.substring(0, translation.indexOf("-")) + ") " + i18n.t("in") + " " + (guesses.length) + " " + i18n.t("guesses") + "."
     }
-    return i18n.t(reference) + " " + i18n.t("in") + " " + (guesses.length) + " " + i18n.t("guesses") + "."
+    return i18n.t(reference) + " " + translation + " " + i18n.t("in") + " " + (guesses.length) + " " + i18n.t("guesses") + "."
 
   }
 
@@ -335,7 +335,7 @@ function Game(props: GameProps) {
         </div>
         {gameState !== GameState.Playing && (
           <div className="buttons">
-            {reference !== "Custom Game" && <button
+            <button
               onClick={() => {
                 shareWon(
                   "Result copied to clipboard!",
@@ -345,7 +345,6 @@ function Game(props: GameProps) {
             >
               Share results
             </button>
-            }
             <button
               onClick={() => {
                 setRestart(prev => prev + 1);

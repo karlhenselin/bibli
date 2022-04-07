@@ -8,8 +8,8 @@ import { bookify } from "./books";
 import targetList from "./targets.json";
 import { CluedLetter, isPunctuation, Clue } from "./clue";
 import i18n from './i18n';
-import Loading from "./Loading"
-import LocaleContext from "./LocaleContext"
+import Loading from "./Loading";
+import LocaleContext from "./LocaleContext";
 
 
 const targets = targetList;
@@ -61,16 +61,7 @@ const params = new URLSearchParams(window.location.search);
 
 
 function App() {
-  function getinitialPuzzleText(): string | null {
-    if (params.get("text") === null) {
-      return null;
-    }
-    try {
-      return window.atob(params.get("text")!)
-    } catch (error) {
-      return null
-    }
-  }
+
 
   type Page = "game" | "about" | "settings";
   const [page, setPage] = useState<Page>("game");
@@ -81,8 +72,8 @@ function App() {
   const [dark, setDark] = useSetting<boolean>("dark", prefersDark);
   const [colorBlind, setColorBlind] = useSetting<boolean>("colorblind", false);
   const [random, setRandom] = useSetting<boolean>("random", false);
-  const [puzzleText, setPuzzleText] = useState<string | null>(getinitialPuzzleText())
-  const [puzzleId, setPuzzleId] = useState<number>(random ? pickRandom(targets) : pick(targets));
+  const [puzzleText, setPuzzleText] = useState<string | null>(params.get("puzzleId"))
+  const [puzzleId, setPuzzleId] = useState<number>(params.get("puzzleId") === null ? (random ? pickRandom(targets) : pick(targets)) : -1);
   const [loadingVerse, setLoadingVerse] = useState<boolean>(false);
   const [keyboard, setKeyboard] = useSetting<string>(
     "keyboard",
@@ -114,7 +105,7 @@ function App() {
   }, [translation, locale]);
 
   useEffect(() => {
-    if (puzzleText === null) {
+    if (params.get("puzzleId") === null) {
       candidate = bookify(targets[puzzleId], languageOf(translation.substring(translation.indexOf("-") + 1)));
       let url: string;
       if (translation !== "") {
@@ -153,8 +144,18 @@ function App() {
           console.error(err);
         });
     } else {
-      setTarget(wordsMapFromText(puzzleText));
-
+      const url: string = "https://bibli.petraguardsoftware.com/puzzles.php?puzzleId=" + params.get("puzzleId");
+      setTarget(new Map());
+      fetch(url, {
+        method: 'get'
+      }).then(response => response.text())
+        .then(data => {
+          setTarget(wordsMapFromText(data));
+          setLoadingVerse(false);
+        })
+        .catch(err => {
+          console.error(err);
+        });
     }
   }, [translation, puzzleId]);
 
@@ -309,7 +310,7 @@ function App() {
                 target={target}
                 reference={puzzleText === null ? bookify(targets[puzzleId], language) : "Custom Game"}
                 puzzleId={puzzleId}
-                translation={puzzleText === null ? translation : ""}
+                translation={puzzleText === null ? translation : puzzleText.toString()}
               />) || i18n.t('Loading') + "..."
           }
         </div >
